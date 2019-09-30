@@ -13,6 +13,9 @@ int main()
 
 	LOG(INFO) << "Hello world!";
 
+	YAML::StreamLogger::set_thread_format(YAML::LoggerFormat::Indent, 4);
+	YAML::StreamLogger::set_thread_format(YAML::LoggerFormat::FloatPrecision, 3);
+
 	{
 		YSL(INFO) << YAML::ThreadFrame("Hello YSL") << YAML::BeginMap;
 		YSL(INFO) << "name"
@@ -55,10 +58,13 @@ int main()
 	const int  n      = 4;
 	const int  m      = 1000;
 	const auto worker = [](int idx) {
+		YAML::StreamLogger::set_thread_format(YAML::DoubleQuoted); // better performance
+		YAML::StreamLogger::set_thread_format(YAML::LoggerFormat::FloatPrecision, 3);
+
 		for (int loop = 0; loop < m; ++loop)
 		{
-			YSL(INFO) << YAML::ThreadFrame("Thread " + std::to_string(idx))
-					  << YAML::FloatPrecision(3) << YAML::Flow << YAML::BeginMap;
+			YSL(INFO) << YAML::ThreadFrame("Thread " + std::to_string(idx)) << YAML::Flow
+					  << YAML::BeginMap;
 			auto phase = idx * .1f + loop * .2f;
 			YSL(INFO) << "cos" << std::cos(phase) << "sin" << std::sin(phase);
 			YSL(INFO) << "log" << std::log(phase) << "exp" << std::exp(phase);
