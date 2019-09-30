@@ -67,3 +67,23 @@ target_link_libraries(run-tests
     ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(yaml-test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run-tests)
+
+file(GLOB ysl_headers ysl/[a-z_]*.h)
+file(GLOB ysl_sources ysl/[a-z_]*.cpp)
+
+add_executable(test-ysl
+    ${ysl_sources}
+    ${ysl_headers}
+)
+
+set_target_properties(test-ysl PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+)
+
+target_link_libraries(test-ysl
+    yaml-cpp
+    glog
+    ${CMAKE_THREAD_LIBS_INIT})
+
+# add_test(test-ysl ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-ysl)

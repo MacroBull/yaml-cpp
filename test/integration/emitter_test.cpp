@@ -566,7 +566,7 @@ TEST_F(EmitterTest, InitialCommentWithDocIndicator) {
 TEST_F(EmitterTest, CommentInFlowSeq) {
   out << Flow << BeginSeq << "foo" << Comment("foo!") << "bar" << EndSeq;
 
-  ExpectEmit("[foo,  # foo!\nbar]");
+  ExpectEmit("[foo,  # foo!\n  bar]");
 }
 
 TEST_F(EmitterTest, CommentInFlowMap) {
@@ -577,7 +577,7 @@ TEST_F(EmitterTest, CommentInFlowMap) {
   out << EndMap;
 
   ExpectEmit(
-      "{foo: foo value, bar: bar value,  # bar!\nbaz: baz value,  # baz!\n}");
+      "{foo: foo value, bar: bar value,  # bar!\n  baz: baz value,  # baz!\n}");
 }
 
 TEST_F(EmitterTest, Indentation) {
@@ -743,7 +743,7 @@ TEST_F(EmitterTest, NewlineInFlowSequence) {
   out << "a" << Newline << "b"
       << "c" << Newline << "d";
   out << EndSeq;
-  ExpectEmit("[a,\nb, c,\nd]");
+  ExpectEmit("[a,\n  b, c,\n  d]");
 }
 
 TEST_F(EmitterTest, NewlineInBlockMap) {
@@ -760,7 +760,7 @@ TEST_F(EmitterTest, NewlineInFlowMap) {
   out << Key << "a" << Value << "foo" << Newline;
   out << Key << "b" << Value << "bar";
   out << EndMap;
-  ExpectEmit("{a: foo,\nb: bar}");
+  ExpectEmit("{a: foo,\n  b: bar}");
 }
 
 TEST_F(EmitterTest, LotsOfNewlines) {
@@ -971,28 +971,28 @@ TEST_F(EmitterTest, QuoteNull) {
 }
 
 TEST_F(EmitterTest, ValueOfDoubleQuote) {
-  out << YAML::BeginMap;
-  out << YAML::Key << "foo" << YAML::Value << '"';
-  out << YAML::EndMap;
+  out << BeginMap;
+  out << Key << "foo" << Value << '"';
+  out << EndMap;
 
   ExpectEmit("foo: \"\\\"\"");
 }
 
 TEST_F(EmitterTest, ValueOfBackslash) {
-  out << YAML::BeginMap;
-  out << YAML::Key << "foo" << YAML::Value << '\\';
-  out << YAML::EndMap;
+  out << BeginMap;
+  out << Key << "foo" << Value << '\\';
+  out << EndMap;
 
   ExpectEmit("foo: \"\\\\\"");
 }
 
 TEST_F(EmitterTest, Infinity) {
-  out << YAML::BeginMap;
-  out << YAML::Key << "foo" << YAML::Value
+  out << BeginMap;
+  out << Key << "foo" << Value
       << std::numeric_limits<float>::infinity();
-  out << YAML::Key << "bar" << YAML::Value
+  out << Key << "bar" << Value
       << std::numeric_limits<double>::infinity();
-  out << YAML::EndMap;
+  out << EndMap;
 
   ExpectEmit(
 	  "foo: .inf\n"
@@ -1000,12 +1000,12 @@ TEST_F(EmitterTest, Infinity) {
 }
 
 TEST_F(EmitterTest, NegInfinity) {
-  out << YAML::BeginMap;
-  out << YAML::Key << "foo" << YAML::Value
+  out << BeginMap;
+  out << Key << "foo" << Value
       << -std::numeric_limits<float>::infinity();
-  out << YAML::Key << "bar" << YAML::Value
+  out << Key << "bar" << Value
       << -std::numeric_limits<double>::infinity();
-  out << YAML::EndMap;
+  out << EndMap;
 
   ExpectEmit(
 	  "foo: -.inf\n"
@@ -1013,12 +1013,12 @@ TEST_F(EmitterTest, NegInfinity) {
 }
 
 TEST_F(EmitterTest, NaN) {
-  out << YAML::BeginMap;
-  out << YAML::Key << "foo" << YAML::Value
+  out << BeginMap;
+  out << Key << "foo" << Value
       << std::numeric_limits<float>::quiet_NaN();
-  out << YAML::Key << "bar" << YAML::Value
+  out << Key << "bar" << Value
       << std::numeric_limits<double>::quiet_NaN();
-  out << YAML::EndMap;
+  out << EndMap;
 
   ExpectEmit(
 	  "foo: .nan\n"
@@ -1074,6 +1074,190 @@ TEST_F(EmitterErrorTest, InvalidAlias) {
   out << EndSeq;
 
   ExpectEmitError(ErrorMsg::INVALID_ALIAS);
+}
+
+TEST_F(EmitterTest, FlowEmptyNewlineMap) {
+  out << BeginMap;
+  out << Key << "foo";
+  out << Value << Flow << BeginMap << Newline << EndMap;
+  out << EndMap;
+
+  ExpectEmit("foo: {\n  }");
+}
+
+TEST_F(EmitterTest, YAML12SpecExample21) {
+  out << BeginSeq;
+  out << "Mark McGwire";
+  out << "Sammy Sosa";
+  out << "Ken Griffey";
+  out << EndSeq;
+
+  ExpectEmit("- Mark McGwire\n- Sammy Sosa\n- Ken Griffey");
+}
+
+TEST_F(EmitterTest, YAML12SpecExample22) {
+  out << FloatPrecision(3);
+  out << BeginMap;
+  out << "hr" << 65 << Comment("Home runs");
+  out << "avg" << 0.278f << Comment("Batting average");
+  out << "rbi" << 147 << Comment("Runs Batted In");
+  out << EndMap;
+
+  ExpectEmit(
+      "hr: 65  # Home runs\navg: 0.278  # Batting average\nrbi: 147  # Runs "
+      "Batted In");
+}
+
+TEST_F(EmitterTest, YAML12SpecExample23) {
+  out << BeginMap;
+  out << "american" << BeginSeq;
+  out << "Boston Red Sox";
+  out << "Detroit Tigers";
+  out << "New York Yankees";
+  out << EndSeq;
+  out << "national" << BeginSeq;
+  out << "New York Mets";
+  out << "Chicago Cubs";
+  out << "Atlanta Braves";
+  out << EndSeq;
+
+  ExpectEmit(
+      "american:\n"
+      "  - Boston Red Sox\n"
+      "  - Detroit Tigers\n"
+      "  - New York Yankees\n"
+      "national:\n"
+      "  - New York Mets\n"
+      "  - Chicago Cubs\n"
+      "  - Atlanta Braves");
+}
+
+TEST_F(EmitterTest, YAML12SpecExample24) {
+  out << FloatPrecision(3);
+  out << BeginSeq;
+  {
+    out << BeginMap << Newline;
+    out << "name"
+        << "Mark McGwire";
+    out << "hr" << 65;
+    out << "avg" << 0.278f;
+    out << EndMap;
+  }
+  {
+    out << BeginMap << Newline;
+    out << "name"
+        << "Sammy Sosa";
+    out << "hr" << 63;
+    out << "avg" << 0.288f;
+    out << EndMap;
+  }
+  out << EndSeq;
+
+  ExpectEmit(
+      "-\n"
+      "  name: Mark McGwire\n"
+      "  hr: 65\n"
+      "  avg: 0.278\n"
+      "-\n"
+      "  name: Sammy Sosa\n"
+      "  hr: 63\n"
+      "  avg: 0.288");
+}
+
+TEST_F(EmitterTest, YAML12SpecExample25) {
+  out << FloatPrecision(3);
+  out << BeginSeq;
+  out << Flow << BeginSeq << "name"
+      << "hr"
+      << "avg" << EndSeq;
+  out << Flow << BeginSeq << "Mark McGwire" << 65 << 0.278f << EndSeq;
+  out << Flow << BeginSeq << "Sammy Sosa" << 63 << 0.288f << EndSeq;
+  out << EndSeq;
+
+  ExpectEmit(
+      "- [name, hr, avg]\n"
+      "- [Mark McGwire, 65, 0.278]\n"
+      "- [Sammy Sosa, 63, 0.288]");
+}
+
+TEST_F(EmitterTest, YAML12SpecExample26) {
+  out << FloatPrecision(3);
+  out << BeginMap;
+  {
+    out << "Mark McGwire" << Flow << BeginMap << "hr" << 65 << "avg" << 0.278f
+        << EndMap;
+    out << "Sammy Sosa" << Flow << BeginMap << Newline;
+    {
+      out << "hr" << 63 << Newline;
+      out << "avg" << 0.288f << Newline;
+    }
+    out << EndMap;
+  }
+  out << EndMap;
+
+  ExpectEmit(
+      "Mark McGwire: {hr: 65, avg: 0.278}\n"
+      "Sammy Sosa: {\n"
+      "    hr: 63,\n"
+      "    avg: 0.288,\n"
+      "  }");
+}
+
+TEST_F(EmitterTest, YAML12SpecExample27) {
+  out << Comment("Ranking of 1998 home runs") << BeginDoc;
+  out << BeginSeq;
+  out << "Mark McGwire";
+  out << "Sammy Sosa";
+  out << "Ken Griffey";
+  out << EndSeq;
+
+  out << Newline << Newline;
+
+  out << Comment("Team ranking") << BeginDoc;
+  out << BeginSeq;
+  out << "Chicago Cubs";
+  out << "St Louis Cardinals";
+  out << EndSeq;
+
+  ExpectEmit(
+      "# Ranking of 1998 home runs\n"
+      "---\n"
+      "- Mark McGwire\n"
+      "- Sammy Sosa\n"
+      "- Ken Griffey\n"
+      "\n"
+      "# Team ranking\n"
+      "---\n"
+      "- Chicago Cubs\n"
+      "- St Louis Cardinals"
+      );
+}
+
+TEST_F(EmitterTest, YAML12SpecExample28) {
+  out << BeginDoc << BeginMap;
+  out << "time" << "20:03:20";
+  out << "player" << "Sammy Sosa";
+  out << "action" << "strike (miss)";
+  out << EndMap << EndDoc;
+
+  out << BeginDoc << BeginMap;
+  out << "time" << "20:03:47";
+  out << "player" << "Sammy Sosa";
+  out << "action" << "grand slam";
+  out << EndMap << EndDoc;
+
+  ExpectEmit(
+      "---\n"
+      "time: 20:03:20\n"
+      "player: Sammy Sosa\n"
+      "action: strike (miss)\n"
+      "...\n"
+      "---\n"
+      "time: 20:03:47\n"
+      "player: Sammy Sosa\n"
+      "action: grand slam\n"
+      "...\n"
+      );
 }
 }  // namespace
 }  // namespace YAML
