@@ -30,7 +30,7 @@ class FilterForwardOutStreamBuf : public std::streambuf
 	bool                          m_dirty{false}, m_end_with_eol{false};
 
 public:
-	explicit FilterForwardOutStreamBuf(const FilterForwardOutStream& stream)
+	explicit FilterForwardOutStreamBuf(const FilterForwardOutStream& stream) noexcept
 		: m_parent{stream}, m_target{nullptr}, m_dirty{false}, m_end_with_eol{false}
 	{
 	}
@@ -227,7 +227,7 @@ bool StreamLogger::set_thread_format(LoggerFormat value, std::size_t n)
 
 StreamLogger::~StreamLogger()
 {
-	self() << Newline; // throw ?
+	self() << Newline;
 	//	m_implicit_eol = true;
 	//	ThreadEmitter << Newline; // throw ?
 	delete m_message;
@@ -243,9 +243,10 @@ StreamLogger& StreamLogger::operator<<(EMITTER_MANIP value)
 
 StreamLogger& StreamLogger::operator<<(const ThreadFrame& value)
 {
-	m_implicit_eol  = false;
+	m_implicit_eol = false;
+	// self() << EndDoc;
+
 	const auto text = " " + value.name + ": " + std::to_string(ThreadFrame::Index++) + " ";
-	// self() << EndDoc; // throw ?
 	ThreadStream << "--- # ";
 	ThreadStream << std::setfill('-')
 				 << std::setw(static_cast<int>(value.fill_width + text.size() / 2));
@@ -253,7 +254,8 @@ StreamLogger& StreamLogger::operator<<(const ThreadFrame& value)
 	ThreadStream << std::setfill('-')
 				 << std::setw(static_cast<int>(value.fill_width - text.size() / 2));
 	ThreadStream << " # "; // ---\n
-	self() << BeginDoc;    // throw ?
+
+	self() << BeginDoc;
 	return *this;
 }
 
