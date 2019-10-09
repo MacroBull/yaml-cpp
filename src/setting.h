@@ -30,7 +30,7 @@ class Setting {
 
 class SettingChangeBase {
  public:
-  virtual ~SettingChangeBase() {}
+  virtual ~SettingChangeBase() = default;
   virtual void pop() = 0;
 };
 
@@ -46,7 +46,7 @@ class SettingChange : public SettingChangeBase {
   SettingChange& operator=(const SettingChange&) = delete;
   SettingChange& operator=(SettingChange&&) = delete;
 
-  virtual void pop() { m_pCurSetting->restore(m_oldSetting); }
+  void pop() override { m_pCurSetting->restore(m_oldSetting); }
 
  private:
   Setting<T>* m_pCurSetting;
@@ -95,7 +95,7 @@ class SettingChanges {
   }
 
  private:
-  typedef std::vector<std::unique_ptr<SettingChangeBase>> setting_changes;
+  using setting_changes = std::vector<std::unique_ptr<SettingChangeBase> >;
   setting_changes m_settingChanges;
 };
 }  // namespace YAML

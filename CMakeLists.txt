@@ -63,7 +63,7 @@ set(backport-msvc-runtime $<VERSION_LESS:${CMAKE_VERSION},3.15>)
 
 add_definitions(-DYSL_NAMESPACE=YAML)
 
-add_library(yaml-cpp ${yaml-cpp-type})
+add_library(yaml-cpp ${yaml-cpp-type} "")
 add_library(yaml::yaml ALIAS yaml-cpp)
 
 set_property(TARGET yaml-cpp

@@ -42,11 +42,7 @@ inline Node::Node(const detail::iterator_value& rhs)
       m_pMemory(rhs.m_pMemory),
       m_pNode(rhs.m_pNode) {}
 
-inline Node::Node(const Node& rhs)
-    : m_isValid(rhs.m_isValid),
-      m_invalidKey(rhs.m_invalidKey),
-      m_pMemory(rhs.m_pMemory),
-      m_pNode(rhs.m_pNode) {}
+inline Node::Node(const Node& rhs) = default;
 
 inline Node::Node(Zombie)
     : m_isValid(false), m_invalidKey{}, m_pMemory{}, m_pNode(nullptr) {}
@@ -57,7 +53,7 @@ inline Node::Node(Zombie, const std::string& key)
 inline Node::Node(detail::node& node, detail::shared_memory_holder pMemory)
     : m_isValid(true), m_invalidKey{}, m_pMemory(pMemory), m_pNode(&node) {}
 
-inline Node::~Node() {}
+inline Node::~Node() = default;
 
 inline void Node::EnsureNodeExists() const {
   if (!m_isValid)
@@ -339,7 +335,7 @@ template <typename T>
 struct to_value_t {
   explicit to_value_t(const T& t_) : t(t_) {}
   const T& t;
-  typedef const T& return_type;
+  using return_type = const T &;
 
   const T& operator()() const { return t; }
 };
@@ -348,7 +344,7 @@ template <>
 struct to_value_t<const char*> {
   explicit to_value_t(const char* t_) : t(t_) {}
   const char* t;
-  typedef std::string return_type;
+  using return_type = std::string;
 
   const std::string operator()() const { return t; }
 };
@@ -357,7 +353,7 @@ template <>
 struct to_value_t<char*> {
   explicit to_value_t(char* t_) : t(t_) {}
   const char* t;
-  typedef std::string return_type;
+  using return_type = std::string;
 
   const std::string operator()() const { return t; }
 };
@@ -366,7 +362,7 @@ template <std::size_t N>
 struct to_value_t<char[N]> {
   explicit to_value_t(const char* t_) : t(t_) {}
   const char* t;
-  typedef std::string return_type;
+  using return_type = std::string;
 
   const std::string operator()() const { return t; }
 };
