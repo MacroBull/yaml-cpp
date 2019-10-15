@@ -6,16 +6,23 @@
 #pragma once
 #endif
 
+#include <complex>
 #include <tuple>
 #include <type_traits>
 #include <utility>
+
+#if !defined(YAML_EMITTER_NO_COMPLEX)
+
+#include <sstream>
+
+#endif
 
 #include "emitter.h"
 
 namespace YAML
 {
 
-namespace detail
+namespace _stl
 {
 
 //// traits
@@ -62,6 +69,20 @@ TRAITS_DECL_CLASS_HAS_TYPE(mapped_type)
 
 //// helpers
 
+template <typename T>
+inline enable_if_t<!(std::is_same<T, char>::value || std::is_same<T, unsigned char>::value), T>
+as_numeric(const T& value)
+{
+	return value;
+}
+
+template <typename T>
+inline enable_if_t<std::is_same<T, char>::value || std::is_same<T, unsigned char>::value, int>
+as_numeric(const T& value)
+{
+	return static_cast<int>(value);
+}
+
 template <typename T, size_t N>
 struct tuple_emitter
 {
@@ -105,7 +126,26 @@ inline Emitter& emit_mapping(Emitter& emitter, const T& value)
 	return emitter << EndMap;
 }
 
-} // namespace detail
+} // namespace _stl
+
+//// std::complex
+
+template <typename T>
+inline Emitter& operator<<(Emitter& emitter, const std::complex<T>& value)
+{
+#ifndef YAML_EMITTER_NO_COMPLEX
+
+	std::stringstream ss;
+	ss << _stl::as_numeric(value.real()) << '+' << _stl::as_numeric(value.imag()) << 'j';
+	emitter << LocalTag("complex") << ss.str();
+	return emitter;
+
+#else
+
+	return emitter << Flow << BeginSeq << value.real() << value.imag() << EndSeq;
+
+#endif
+}
 
 //// std::pair
 
@@ -121,7 +161,7 @@ template <typename... Args>
 inline Emitter& operator<<(Emitter& emitter, const std::tuple<Args...>& value)
 {
 	emitter << Flow << BeginSeq;
-	detail::tuple_emitter<std::tuple<Args...>, sizeof...(Args)>::emit(emitter, value);
+	_stl::tuple_emitter<std::tuple<Args...>, sizeof...(Args)>::emit(emitter, value);
 	return emitter << EndSeq;
 }
 
@@ -129,27 +169,27 @@ inline Emitter& operator<<(Emitter& emitter, const std::tuple<Args...>& value)
 //// std::set, std::multiset, std::unordered_set
 
 template <typename T>
-inline detail::enable_if_t<
-		detail::is_std_iterable<T>::value && !detail::has_type_mapped_type<T>::value, Emitter&>
+inline _stl::enable_if_t<
+		_stl::is_std_iterable<T>::value && !_stl::has_type_mapped_type<T>::value, Emitter&>
 operator<<(Emitter& emitter, const T& value)
 {
-	return detail::emit_sequence(emitter, value);
+	return _stl::emit_sequence(emitter, value);
 }
 
 //// std::map, std::unordered_map
 
 template <typename T>
-inline detail::enable_if_t<
-		detail::is_std_iterable<T>::value && detail::has_type_mapped_type<T>::value, Emitter&>
+inline _stl::enable_if_t<
+		_stl::is_std_iterable<T>::value && _stl::has_type_mapped_type<T>::value, Emitter&>
 operator<<(Emitter& emitter, const T& value)
 {
-	return detail::emit_mapping(emitter, value);
+	return _stl::emit_mapping(emitter, value);
 }
 
 //// std::unique_ptr, std::shared_ptr
 
 template <typename T>
-inline detail::enable_if_t<detail::has_type_element_type<T>::value, Emitter&>
+inline _stl::enable_if_t<_stl::has_type_element_type<T>::value, Emitter&>
 operator<<(Emitter& emitter, const T& value)
 {
 	return emitter << value.get();

@@ -1,9 +1,8 @@
 #ifndef EMITTER_H_62B23520_7C8E_11DE_8A39_0800200C9A66
 #define EMITTER_H_62B23520_7C8E_11DE_8A39_0800200C9A66
 
-#if defined(_MSC_VER) ||                                            \
-    (defined(__GNUC__) && (__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || \
-     (__GNUC__ >= 4))  // GCC supports "pragma once" correctly since 3.4
+#if defined(_MSC_VER) || (defined(__GNUC__) && (__GNUC__ == 3 && __GNUC_MINOR__ >= 4) ||       \
+						  (__GNUC__ >= 4)) // GCC supports "pragma once" correctly since 3.4
 #pragma once
 #endif
 
@@ -22,177 +21,195 @@
 #include "yaml-cpp/null.h"
 #include "yaml-cpp/ostream_wrapper.h"
 
-namespace YAML {
+namespace YAML
+{
 class Binary;
 struct _Null;
-}  // namespace YAML
+} // namespace YAML
 
-namespace YAML {
+namespace YAML
+{
 class EmitterState;
 
-class YAML_CPP_API Emitter {
- public:
-  Emitter();
-  explicit Emitter(std::ostream& stream);
-  Emitter(const Emitter&) = delete;
-  Emitter& operator=(const Emitter&) = delete;
-  ~Emitter();
+class YAML_CPP_API Emitter
+{
+public:
+	Emitter();
+	explicit Emitter(std::ostream& stream);
+	Emitter(const Emitter&) = delete;
+	Emitter& operator=(const Emitter&) = delete;
+	~Emitter();
 
-  // output
-  const char* c_str() const;
-  std::size_t size() const;
+	// output
+	const char* c_str() const;
+	std::size_t size() const;
 
-  // state checking
-  bool good() const;
-  const std::string GetLastError() const;
+	// state checking
+	bool              good() const;
+	const std::string GetLastError() const;
 
-  // global setters
-  bool SetOutputCharset(EMITTER_MANIP value);
-  bool SetStringFormat(EMITTER_MANIP value);
-  bool SetBoolFormat(EMITTER_MANIP value);
-  bool SetIntBase(EMITTER_MANIP value);
-  bool SetSeqFormat(EMITTER_MANIP value);
-  bool SetMapFormat(EMITTER_MANIP value);
-  bool SetIndent(std::size_t n);
-  bool SetPreCommentIndent(std::size_t n);
-  bool SetPostCommentIndent(std::size_t n);
-  bool SetFloatPrecision(std::size_t n);
-  bool SetDoublePrecision(std::size_t n);
+	std::size_t GetFloatPrecision() const;
+	std::size_t GetDoublePrecision() const;
 
-  // local setters
-  Emitter& SetLocalValue(EMITTER_MANIP value);
-  Emitter& SetLocalIndent(const _Indent& indent);
-  Emitter& SetLocalPrecision(const _Precision& precision);
+	// global setters
+	bool SetOutputCharset(EMITTER_MANIP value);
+	bool SetStringFormat(EMITTER_MANIP value);
+	bool SetBoolFormat(EMITTER_MANIP value);
+	bool SetIntBase(EMITTER_MANIP value);
+	bool SetSeqFormat(EMITTER_MANIP value);
+	bool SetMapFormat(EMITTER_MANIP value);
+	bool SetIndent(std::size_t n);
+	bool SetPreCommentIndent(std::size_t n);
+	bool SetPostCommentIndent(std::size_t n);
+	bool SetFloatPrecision(std::size_t n);
+	bool SetDoublePrecision(std::size_t n);
 
-  // overloads of write
-  Emitter& Write(const std::string& str);
-  Emitter& Write(bool b);
-  Emitter& Write(char ch);
-  Emitter& Write(const _Alias& alias);
-  Emitter& Write(const _Anchor& anchor);
-  Emitter& Write(const _Tag& tag);
-  Emitter& Write(const _Comment& comment);
-  Emitter& Write(const _Null& n);
-  Emitter& Write(const Binary& binary);
+	// local setters
+	Emitter& SetLocalValue(EMITTER_MANIP value);
+	Emitter& SetLocalIndent(const _Indent& indent);
+	Emitter& SetLocalPrecision(const _Precision& precision);
 
-  template <typename T>
-  Emitter& WriteIntegralType(T value);
+	// overloads of write
+	Emitter& Write(const std::string& str);
+	Emitter& Write(bool b);
+	Emitter& Write(char ch);
+	Emitter& Write(const _Alias& alias);
+	Emitter& Write(const _Anchor& anchor);
+	Emitter& Write(const _Tag& tag);
+	Emitter& Write(const _Comment& comment);
+	Emitter& Write(const _Null& n);
+	Emitter& Write(const Binary& binary);
 
-  template <typename T>
-  Emitter& WriteStreamable(T value);
+	template <typename T>
+	Emitter& WriteIntegralType(T value);
 
- private:
-  template <typename T>
-  void SetStreamablePrecision(std::stringstream&) {}
-  std::size_t GetFloatPrecision() const;
-  std::size_t GetDoublePrecision() const;
+	template <typename T>
+	Emitter& WriteStreamable(T value);
 
-  void PrepareIntegralStream(std::stringstream& stream) const;
-  void StartedScalar();
+private:
+	template <typename T>
+	void SetStreamablePrecision(std::stringstream&)
+	{
+	}
 
- private:
-  void EmitBeginDoc();
-  void EmitEndDoc();
-  void EmitBeginSeq();
-  void EmitEndSeq();
-  void EmitBeginMap();
-  void EmitEndMap();
-  void EmitNewline();
-  void EmitKindTag();
-  void EmitTag(bool verbatim, const _Tag& tag);
+	void PrepareIntegralStream(std::stringstream& stream) const;
+	void StartedScalar();
 
-  void PrepareNode(EmitterNodeType::value child);
-  void PrepareTopNode(EmitterNodeType::value child);
-  void FlowSeqPrepareNode(EmitterNodeType::value child);
-  void BlockSeqPrepareNode(EmitterNodeType::value child);
+private:
+	void EmitBeginDoc();
+	void EmitEndDoc();
+	void EmitBeginSeq();
+	void EmitEndSeq();
+	void EmitBeginMap();
+	void EmitEndMap();
+	void EmitNewline();
+	void EmitKindTag();
+	void EmitTag(bool verbatim, const _Tag& tag);
 
-  void FlowMapPrepareNode(EmitterNodeType::value child);
+	void PrepareNode(EmitterNodeType::value child);
+	void PrepareTopNode(EmitterNodeType::value child);
+	void FlowSeqPrepareNode(EmitterNodeType::value child);
+	void BlockSeqPrepareNode(EmitterNodeType::value child);
 
-  void FlowMapPrepareLongKey(EmitterNodeType::value child);
-  void FlowMapPrepareLongKeyValue(EmitterNodeType::value child);
-  void FlowMapPrepareSimpleKey(EmitterNodeType::value child);
-  void FlowMapPrepareSimpleKeyValue(EmitterNodeType::value child);
+	void FlowMapPrepareNode(EmitterNodeType::value child);
 
-  void BlockMapPrepareNode(EmitterNodeType::value child);
+	void FlowMapPrepareLongKey(EmitterNodeType::value child);
+	void FlowMapPrepareLongKeyValue(EmitterNodeType::value child);
+	void FlowMapPrepareSimpleKey(EmitterNodeType::value child);
+	void FlowMapPrepareSimpleKeyValue(EmitterNodeType::value child);
 
-  void BlockMapPrepareLongKey(EmitterNodeType::value child);
-  void BlockMapPrepareLongKeyValue(EmitterNodeType::value child);
-  void BlockMapPrepareSimpleKey(EmitterNodeType::value child);
-  void BlockMapPrepareSimpleKeyValue(EmitterNodeType::value child);
+	void BlockMapPrepareNode(EmitterNodeType::value child);
 
-  void SpaceOrIndentTo(bool requireSpace, std::size_t indent);
+	void BlockMapPrepareLongKey(EmitterNodeType::value child);
+	void BlockMapPrepareLongKeyValue(EmitterNodeType::value child);
+	void BlockMapPrepareSimpleKey(EmitterNodeType::value child);
+	void BlockMapPrepareSimpleKeyValue(EmitterNodeType::value child);
 
-  const char* ComputeFullBoolName(bool b) const;
-  bool CanEmitNewline() const;
+	void SpaceOrIndentTo(bool requireSpace, std::size_t indent);
 
- private:
-  std::unique_ptr<EmitterState> m_pState;
-  ostream_wrapper m_stream;
+	const char* ComputeFullBoolName(bool b) const;
+	bool        CanEmitNewline() const;
+
+private:
+	std::unique_ptr<EmitterState> m_pState;
+	ostream_wrapper               m_stream;
 };
 
 template <typename T>
-inline Emitter& Emitter::WriteIntegralType(T value) {
-  if (!good())
-    return *this;
+inline Emitter& Emitter::WriteIntegralType(T value)
+{
+	if (!good())
+		return *this;
 
-  PrepareNode(EmitterNodeType::Scalar);
+	PrepareNode(EmitterNodeType::Scalar);
 
-  std::stringstream stream;
-  PrepareIntegralStream(stream);
-  stream << value;
-  m_stream << stream.str();
+	std::stringstream stream;
+	PrepareIntegralStream(stream);
+	stream << value;
+	m_stream << stream.str();
 
-  StartedScalar();
+	StartedScalar();
 
-  return *this;
+	return *this;
 }
 
 template <typename T>
-inline Emitter& Emitter::WriteStreamable(T value) {
-  if (!good())
-    return *this;
+inline Emitter& Emitter::WriteStreamable(T value)
+{
+	if (!good())
+		return *this;
 
-  PrepareNode(EmitterNodeType::Scalar);
+	PrepareNode(EmitterNodeType::Scalar);
 
-  std::stringstream stream;
-  SetStreamablePrecision<T>(stream);
+	std::stringstream stream;
+	SetStreamablePrecision<T>(stream);
 
-  bool special = false;
-  if (std::is_floating_point<T>::value) {
-    if ((std::numeric_limits<T>::has_quiet_NaN ||
-         std::numeric_limits<T>::has_signaling_NaN) &&
-        std::isnan(value)) {
-      special = true;
-      stream << ".nan";
-    } else if (std::numeric_limits<T>::has_infinity) {
-      if (value == std::numeric_limits<T>::infinity()) {
-        special = true;
-        stream << ".inf";
-      } else if (value == -std::numeric_limits<T>::infinity()) {
-        special = true;
-        stream << "-.inf";
-      }
-    }
-  }
+	bool special = false;
+	if (std::is_floating_point<T>::value)
+	{
+		if ((std::numeric_limits<T>::has_quiet_NaN ||
+			 std::numeric_limits<T>::has_signaling_NaN) &&
+			std::isnan(value))
+		{
+			special = true;
+			stream << ".nan";
+		}
+		else if (std::numeric_limits<T>::has_infinity)
+		{
+			if (value == std::numeric_limits<T>::infinity())
+			{
+				special = true;
+				stream << ".inf";
+			}
+			else if (value == -std::numeric_limits<T>::infinity())
+			{
+				special = true;
+				stream << "-.inf";
+			}
+		}
+	}
 
-  if (!special) {
-    stream << value;
-  }
-  m_stream << stream.str();
+	if (!special)
+	{
+		stream << value;
+	}
+	m_stream << stream.str();
 
-  StartedScalar();
+	StartedScalar();
 
-  return *this;
+	return *this;
 }
 
 template <>
-inline void Emitter::SetStreamablePrecision<float>(std::stringstream& stream) {
-  stream.precision(static_cast<std::streamsize>(GetFloatPrecision()));
+inline void Emitter::SetStreamablePrecision<float>(std::stringstream& stream)
+{
+	stream.precision(static_cast<std::streamsize>(GetFloatPrecision()));
 }
 
 template <>
-inline void Emitter::SetStreamablePrecision<double>(std::stringstream& stream) {
-  stream.precision(static_cast<std::streamsize>(GetDoublePrecision()));
+inline void Emitter::SetStreamablePrecision<double>(std::stringstream& stream)
+{
+	stream.precision(static_cast<std::streamsize>(GetDoublePrecision()));
 }
 
 // overloads of insertion
@@ -326,6 +343,6 @@ inline Emitter& operator<<(Emitter& emitter, const void* v)
 	return emitter.WriteIntegralType(v);
 }
 
-}  // namespace YAML
+} // namespace YAML
 
-#endif  // EMITTER_H_62B23520_7C8E_11DE_8A39_0800200C9A66
+#endif // EMITTER_H_62B23520_7C8E_11DE_8A39_0800200C9A66

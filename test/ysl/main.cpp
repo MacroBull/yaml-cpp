@@ -1,6 +1,8 @@
 
 #include <cmath>
+#include <map>
 #include <thread>
+#include <vector>
 
 #include <yaml-cpp/contrib/ysl.hpp>
 #include <yaml-cpp/stlemitter.h>
