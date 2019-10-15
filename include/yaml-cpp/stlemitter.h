@@ -6,12 +6,9 @@
 #pragma once
 #endif
 
-#include <list>
-#include <map>
-#include <set>
 #include <tuple>
+#include <type_traits>
 #include <utility>
-#include <vector>
 
 #include "emitter.h"
 
@@ -20,6 +17,50 @@ namespace YAML
 
 namespace detail
 {
+
+//// traits
+
+template <typename... Args>
+struct make_void
+{
+	using type = void;
+};
+
+template <typename... Args>
+using void_t = typename make_void<Args...>::type;
+
+template <bool P, typename T = void>
+using enable_if_t = typename std::enable_if<P, T>::type;
+
+template <typename T, typename Test = void>
+struct is_std_iterable : std::false_type
+{
+};
+
+template <typename T>
+struct is_std_iterable<T,
+					   enable_if_t<std::is_same<decltype(std::begin(std::declval<T>())),
+												decltype(std::end(std::declval<T>()))>::value>>
+	: std::true_type
+{
+};
+
+#define TRAITS_DECL_CLASS_HAS_TYPE(name)                                                       \
+	template <class T, typename Test = void>                                                   \
+	struct has_type_##name : std::false_type                                                   \
+	{                                                                                          \
+	};                                                                                         \
+	template <class T>                                                                         \
+	struct has_type_##name<T, void_t<typename T::name>> : std::true_type                       \
+	{                                                                                          \
+	};
+
+TRAITS_DECL_CLASS_HAS_TYPE(element_type)
+TRAITS_DECL_CLASS_HAS_TYPE(mapped_type)
+
+#undef TRAITS_DECL_CLASS_HAS_TYPE
+
+//// helpers
 
 template <typename T, size_t N>
 struct tuple_emitter
@@ -42,60 +83,78 @@ struct tuple_emitter<T, 1>
 	}
 };
 
+template <typename T>
+inline Emitter& emit_sequence(Emitter& emitter, const T& value)
+{
+	emitter << BeginSeq;
+	for (const auto& item : value)
+	{
+		emitter << item;
+	}
+	return emitter << EndSeq;
+}
+
+template <typename T>
+inline Emitter& emit_mapping(Emitter& emitter, const T& value)
+{
+	emitter << BeginMap;
+	for (const auto& key_value : value)
+	{
+		emitter << Key << std::get<0>(key_value) << Value << std::get<1>(key_value);
+	}
+	return emitter << EndMap;
+}
+
 } // namespace detail
 
-template <typename K, typename V>
-inline Emitter& operator<<(Emitter& emitter, const std::pair<K, V>& value)
+//// std::pair
+
+template <typename T1, typename T2>
+inline Emitter& operator<<(Emitter& emitter, const std::pair<T1, T2>& value)
 {
 	return emitter << Flow << BeginSeq << value.first << value.second << EndSeq;
 }
+
+//// std::tuple
 
 template <typename... Args>
 inline Emitter& operator<<(Emitter& emitter, const std::tuple<Args...>& value)
 {
 	emitter << Flow << BeginSeq;
 	detail::tuple_emitter<std::tuple<Args...>, sizeof...(Args)>::emit(emitter, value);
-	emitter << EndSeq;
-	return emitter;
+	return emitter << EndSeq;
 }
 
-template <typename Seq>
-inline Emitter& EmitSeq(Emitter& emitter, const Seq& seq)
-{
-	emitter << BeginSeq;
-	for (typename Seq::const_iterator it = seq.begin(); it != seq.end(); ++it) emitter << *it;
-	emitter << EndSeq;
-	return emitter;
-}
+//// std::array, std::vector, std::deque, std::list, std::forward_list
+//// std::set, std::multiset, std::unordered_set
 
 template <typename T>
-inline Emitter& operator<<(Emitter& emitter, const std::vector<T>& v)
+inline detail::enable_if_t<
+		detail::is_std_iterable<T>::value && !detail::has_type_mapped_type<T>::value, Emitter&>
+operator<<(Emitter& emitter, const T& value)
 {
-	return EmitSeq(emitter, v);
+	return detail::emit_sequence(emitter, value);
 }
+
+//// std::map, std::unordered_map
 
 template <typename T>
-inline Emitter& operator<<(Emitter& emitter, const std::list<T>& v)
+inline detail::enable_if_t<
+		detail::is_std_iterable<T>::value && detail::has_type_mapped_type<T>::value, Emitter&>
+operator<<(Emitter& emitter, const T& value)
 {
-	return EmitSeq(emitter, v);
+	return detail::emit_mapping(emitter, value);
 }
+
+//// std::unique_ptr, std::shared_ptr
 
 template <typename T>
-inline Emitter& operator<<(Emitter& emitter, const std::set<T>& v)
+inline detail::enable_if_t<detail::has_type_element_type<T>::value, Emitter&>
+operator<<(Emitter& emitter, const T& value)
 {
-	return EmitSeq(emitter, v);
+	return emitter << value.get();
 }
 
-template <typename K, typename V>
-inline Emitter& operator<<(Emitter& emitter, const std::map<K, V>& m)
-{
-	typedef typename std::map<K, V> map;
-	emitter << BeginMap;
-	for (typename map::const_iterator it = m.begin(); it != m.end(); ++it)
-		emitter << Key << it->first << Value << it->second;
-	emitter << EndMap;
-	return emitter;
-}
 } // namespace YAML
 
 #endif // STLEMITTER_H_62B23520_7C8E_11DE_8A39_0800200C9A66

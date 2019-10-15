@@ -196,84 +196,136 @@ inline void Emitter::SetStreamablePrecision<double>(std::stringstream& stream) {
 }
 
 // overloads of insertion
-inline Emitter& operator<<(Emitter& emitter, const std::string& v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, bool v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, char v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, unsigned char v) {
-  return emitter.Write(static_cast<char>(v));
-}
-inline Emitter& operator<<(Emitter& emitter, const _Alias& v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, const _Anchor& v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, const _Tag& v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, const _Comment& v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, const _Null& v) {
-  return emitter.Write(v);
-}
-inline Emitter& operator<<(Emitter& emitter, const Binary& b) {
-  return emitter.Write(b);
+inline Emitter& operator<<(Emitter& emitter, const std::string& v)
+{
+	return emitter.Write(v);
 }
 
-inline Emitter& operator<<(Emitter& emitter, const char* v) {
-  return emitter.Write(std::string(v));
+inline Emitter& operator<<(Emitter& emitter, bool v)
+{
+	return emitter.Write(v);
 }
 
-inline Emitter& operator<<(Emitter& emitter, int v) {
-  return emitter.WriteIntegralType(v);
-}
-inline Emitter& operator<<(Emitter& emitter, unsigned int v) {
-  return emitter.WriteIntegralType(v);
-}
-inline Emitter& operator<<(Emitter& emitter, short v) {
-  return emitter.WriteIntegralType(v);
-}
-inline Emitter& operator<<(Emitter& emitter, unsigned short v) {
-  return emitter.WriteIntegralType(v);
-}
-inline Emitter& operator<<(Emitter& emitter, long v) {
-  return emitter.WriteIntegralType(v);
-}
-inline Emitter& operator<<(Emitter& emitter, unsigned long v) {
-  return emitter.WriteIntegralType(v);
-}
-inline Emitter& operator<<(Emitter& emitter, long long v) {
-  return emitter.WriteIntegralType(v);
-}
-inline Emitter& operator<<(Emitter& emitter, unsigned long long v) {
-  return emitter.WriteIntegralType(v);
+inline Emitter& operator<<(Emitter& emitter, char v)
+{
+	return emitter.Write(v);
 }
 
-inline Emitter& operator<<(Emitter& emitter, float v) {
-  return emitter.WriteStreamable(v);
-}
-inline Emitter& operator<<(Emitter& emitter, double v) {
-  return emitter.WriteStreamable(v);
+inline Emitter& operator<<(Emitter& emitter, unsigned char v)
+{
+	return emitter.Write(static_cast<char>(v));
 }
 
-inline Emitter& operator<<(Emitter& emitter, EMITTER_MANIP value) {
-  return emitter.SetLocalValue(value);
+inline Emitter& operator<<(Emitter& emitter, const _Alias& v)
+{
+	return emitter.Write(v);
 }
 
-inline Emitter& operator<<(Emitter& emitter, _Indent indent) {
-  return emitter.SetLocalIndent(indent);
+inline Emitter& operator<<(Emitter& emitter, const _Anchor& v)
+{
+	return emitter.Write(v);
 }
 
-inline Emitter& operator<<(Emitter& emitter, _Precision precision) {
-  return emitter.SetLocalPrecision(precision);
+inline Emitter& operator<<(Emitter& emitter, const _Tag& v)
+{
+	return emitter.Write(v);
 }
+
+inline Emitter& operator<<(Emitter& emitter, const _Comment& v)
+{
+	return emitter.Write(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, YAML::_Null v)
+{
+	return emitter.Write(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, const Binary& b)
+{
+	return emitter.Write(b);
+}
+
+inline Emitter& operator<<(Emitter& emitter, const char* v)
+{
+	return emitter.Write(std::string(v));
+}
+
+inline Emitter& operator<<(Emitter& emitter, int v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, unsigned int v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, short v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, unsigned short v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, long v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, unsigned long v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, long long v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, unsigned long long v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, float v)
+{
+	return emitter.WriteStreamable(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, double v)
+{
+	return emitter.WriteStreamable(v);
+}
+
+inline Emitter& operator<<(Emitter& emitter, EMITTER_MANIP value)
+{
+	return emitter.SetLocalValue(value);
+}
+
+inline Emitter& operator<<(Emitter& emitter, _Indent indent)
+{
+	return emitter.SetLocalIndent(indent);
+}
+
+inline Emitter& operator<<(Emitter& emitter, _Precision precision)
+{
+	return emitter.SetLocalPrecision(precision);
+}
+
+inline Emitter& operator<<(Emitter& emitter, std::nullptr_t)
+{
+	return emitter.Write(_Null{});
+}
+
+inline Emitter& operator<<(Emitter& emitter, const void* v)
+{
+	return emitter.WriteIntegralType(v);
+}
+
 }  // namespace YAML
 
 #endif  // EMITTER_H_62B23520_7C8E_11DE_8A39_0800200C9A66
