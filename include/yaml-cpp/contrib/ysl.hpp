@@ -6,11 +6,12 @@ Copyright (c) 2019 Macrobull
 
 #pragma once
 
-#include <yaml-cpp/emitter.h>
-
 #include <glog/logging.h>
 
+#include "yaml-cpp/emitter.h"
+
 #include "reconstructable.hpp"
+#include "stack_storage.hpp"
 
 //// YSL configs
 
@@ -46,13 +47,13 @@ enum class LoggerFormat
 // threaded incremental frame manipulator, an extension of YAML document
 struct ThreadFrame
 {
-	thread_local static std::size_t Index;
-
 	const std::string name;
 	const std::size_t fill_width{25};
 
 	explicit ThreadFrame(std::string rv_name) noexcept;
 	ThreadFrame(std::string rv_name, std::size_t rv_fill_width) noexcept;
+
+	std::size_t index() const;
 };
 
 // the YSL logger class
@@ -87,7 +88,7 @@ public:
 	// forward constructor
 	template <typename... CArgs>
 	explicit StreamLogger(CArgs... args)
-		: m_message{new Reconstructable<SkipEmptyLogMessage>{std::forward<CArgs>(args)...}}
+		: m_message{std::forward<CArgs>(args)...}
 	{
 		reset();
 	}
@@ -134,18 +135,15 @@ protected:
 	void reset();
 
 private:
-	// use pointer for explicit destructor call
-	Reconstructable<SkipEmptyLogMessage>* m_message{nullptr};
-	bool                                  m_implicit_eol{};
+	stack_storage<Reconstructable<SkipEmptyLogMessage>> m_message;
+	bool                                                m_implicit_eol{};
 };
 
 // voidifier, see @ref google::LogMessageVoidify
 // inline void operator&(std::nullptr_t, const StreamLogger&) {}
 struct LoggerVoidify
 {
-	inline void operator&(const StreamLogger& /*logger*/)
-	{
-	}
+	inline void operator&(const StreamLogger& /*logger*/) {}
 };
 
 } // namespace YSL_NAMESPACE
@@ -163,8 +161,8 @@ namespace YSL_ = YSL; // prevent recursive macro expansion
 #define YSL(severity) YSL_NS_ StreamLogger{__FILE__, __LINE__, google::GLOG_##severity}.self()
 #define YSL_AT_LEVEL(severity) YSL_NS_ StreamLogger(__FILE__, __LINE__, severity).self()
 #define YSL_TO_STRING(severity, message)                                                       \
-	YSL_NS_ StreamLogger{__FILE__, __LINE__, google::GLOG_##severity,                          \
-						 static_cast<std::string*>(message)}                                   \
+	YSL_NS_ StreamLogger{                                                                      \
+			__FILE__, __LINE__, google::GLOG_##severity, static_cast<std::string*>(message)}   \
 			.self()
 #define YSL_STRING(severity, outvec)                                                           \
 	YSL_NS_ StreamLogger{__FILE__, __LINE__, google::GLOG_##severity,                          \
@@ -180,6 +178,6 @@ namespace YSL_ = YSL; // prevent recursive macro expansion
 			.self()
 
 #define YSL_IF(severity, condition)                                                            \
-	!(condition) ? (void) 0 : YSL_NS_ LoggerVoidify() & YSL(severity)
+	!(condition) ? (void)0 : YSL_NS_ LoggerVoidify() & YSL(severity)
 #define VYSL(verboselevel) YSL_IF(INFO, VLOG_IS_ON(verboselevel))
 #define VYSL_IF(verboselevel, condition) YSL_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))

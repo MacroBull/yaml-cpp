@@ -1,44 +1,12 @@
 
 #pragma once
 
-#include <type_traits>
-
-#if !defined(YAML_EMITTER_NO_COMPLEX) || !defined(YAML_EMITTER_NO_CV_FORMATTER)
-
-#include <sstream>
-
-#endif
-
 #include <opencv2/core.hpp>
 
-#include "emitter.h"
+#include "emitter_extra.hpp"
 
 namespace YAML
 {
-
-namespace _cv
-{
-
-//// traits
-
-template <bool P, typename T = void>
-using enable_if_t = typename std::enable_if<P, T>::type;
-
-template <typename T>
-inline enable_if_t<!(std::is_same<T, char>::value || std::is_same<T, unsigned char>::value), T>
-as_numeric(const T& value)
-{
-	return value;
-}
-
-template <typename T>
-inline enable_if_t<std::is_same<T, char>::value || std::is_same<T, unsigned char>::value, int>
-as_numeric(const T& value)
-{
-	return static_cast<int>(value);
-}
-
-} // namespace _cv
 
 //// cv::String
 
@@ -49,24 +17,23 @@ Emitter& operator<<(Emitter& emitter, const cv::String& value)
 
 #ifndef YAML_EMITTER_NO_CV_FORMATTER
 
-//// cv::Formatted as string literal, YAML format is bypassed
-
-Emitter& operator<<(Emitter& emitter, const cv::Ptr<cv::Formatted> value)
-{
-	std::stringstream ss;
-	ss << value;
-	return emitter << Literal << ss.str();
-}
-
 //// cv::Mat
 
 Emitter& operator<<(Emitter& emitter, const cv::Mat& value)
 {
 	auto formatter = cv::Formatter::get(cv::Formatter::FMT_PYTHON);
+	formatter->setMultiline(true);
+
+#ifdef YSL_NAMESPACE // extension
+
 	formatter->set32fPrecision(static_cast<int>(emitter.GetFloatPrecision()));
 	formatter->set64fPrecision(static_cast<int>(emitter.GetDoublePrecision()));
-	formatter->setMultiline(true);
-	return emitter << LocalTag("tensor") << formatter->format(value);
+
+#endif
+
+	return detail::emit_streamable(
+			emitter << LocalTag("tensor") << Literal,
+			cv::Formatter::get(cv::Formatter::FMT_PYTHON)->format(value));
 }
 
 #endif
@@ -78,8 +45,19 @@ Emitter& operator<<(Emitter& emitter, const cv::Mat_<T>& value)
 {
 #ifndef YAML_EMITTER_NO_CV_FORMATTER
 
-	return emitter << LocalTag("tensor")
-				   << cv::Formatter::get(cv::Formatter::FMT_PYTHON)->format(value);
+	auto formatter = cv::Formatter::get(cv::Formatter::FMT_PYTHON);
+	formatter->setMultiline(true);
+
+#ifdef YSL_NAMESPACE // extension
+
+	formatter->set32fPrecision(static_cast<int>(emitter.GetFloatPrecision()));
+	formatter->set64fPrecision(static_cast<int>(emitter.GetDoublePrecision()));
+
+#endif
+
+	return detail::emit_streamable(
+			emitter << LocalTag("tensor") << Literal,
+			cv::Formatter::get(cv::Formatter::FMT_PYTHON)->format(value));
 
 #else
 
@@ -89,7 +67,7 @@ Emitter& operator<<(Emitter& emitter, const cv::Mat_<T>& value)
 		emitter << Flow << BeginSeq;
 		for (int j = 0; j < value.cols; ++j)
 		{
-			emitter << _cv::as_numeric(value(i, j));
+			emitter << detail::as_numeric(value(i, j));
 		}
 		emitter << EndSeq;
 	}
@@ -100,8 +78,8 @@ Emitter& operator<<(Emitter& emitter, const cv::Mat_<T>& value)
 
 //// cv::Matx
 
-template <typename T, int m, int n>
-Emitter& operator<<(Emitter& emitter, const cv::Matx<T, m, n>& value)
+template <typename T, int M, int N>
+Emitter& operator<<(Emitter& emitter, const cv::Matx<T, M, N>& value)
 {
 	emitter << BeginSeq;
 	for (int i = 0; i < value.rows; ++i)
@@ -109,7 +87,7 @@ Emitter& operator<<(Emitter& emitter, const cv::Matx<T, m, n>& value)
 		emitter << Flow << BeginSeq;
 		for (int j = 0; j < value.cols; ++j)
 		{
-			emitter << _cv::as_numeric(value(i, j));
+			emitter << detail::as_numeric(value(i, j));
 		}
 		emitter << EndSeq;
 	}
@@ -122,7 +100,7 @@ template <typename T>
 Emitter& operator<<(Emitter& emitter, const cv::Point_<T>& value)
 {
 	emitter << Flow << BeginSeq;
-	emitter << _cv::as_numeric(value.x) << _cv::as_numeric(value.y);
+	emitter << detail::as_numeric(value.x) << detail::as_numeric(value.y);
 	return emitter << EndSeq;
 }
 
@@ -132,7 +110,8 @@ template <typename T>
 Emitter& operator<<(Emitter& emitter, const cv::Point3_<T>& value)
 {
 	emitter << Flow << BeginSeq;
-	emitter << _cv::as_numeric(value.x) << _cv::as_numeric(value.y) << _cv::as_numeric(value.z);
+	emitter << detail::as_numeric(value.x) << detail::as_numeric(value.y)
+			<< detail::as_numeric(value.z);
 	return emitter << EndSeq;
 }
 
@@ -144,7 +123,7 @@ Emitter& operator<<(Emitter& emitter, const cv::Vec<T, N>& value)
 	emitter << Flow << BeginSeq;
 	for (int i = 0; i < N; ++i)
 	{
-		emitter << _cv::as_numeric(value[i]);
+		emitter << detail::as_numeric(value[i]);
 	}
 	return emitter << EndSeq;
 }
@@ -155,7 +134,7 @@ template <typename T>
 Emitter& operator<<(Emitter& emitter, const cv::Size_<T>& value)
 {
 	emitter << Flow << BeginSeq;
-	emitter << _cv::as_numeric(value.width) << _cv::as_numeric(value.height);
+	emitter << detail::as_numeric(value.width) << detail::as_numeric(value.height);
 	return emitter << EndSeq;
 }
 
@@ -165,8 +144,8 @@ template <typename T>
 Emitter& operator<<(Emitter& emitter, const cv::Rect_<T>& value)
 {
 	emitter << Flow << BeginSeq;
-	emitter << _cv::as_numeric(value.x) << _cv::as_numeric(value.y);
-	emitter << _cv::as_numeric(value.width) << _cv::as_numeric(value.height);
+	emitter << detail::as_numeric(value.x) << detail::as_numeric(value.y);
+	emitter << detail::as_numeric(value.width) << detail::as_numeric(value.height);
 	return emitter << EndSeq;
 }
 
@@ -182,17 +161,7 @@ Emitter& operator<<(Emitter& emitter, const cv::Range& value)
 template <typename T>
 inline Emitter& operator<<(Emitter& emitter, const cv::Complex<T>& value)
 {
-#ifndef YAML_EMITTER_NO_COMPLEX
-
-	std::stringstream ss;
-	ss << _cv::as_numeric(value.re) << '+' << _cv::as_numeric(value.im) << 'j';
-	return emitter << LocalTag("complex") << ss.str();
-
-#else
-
-	return emitter << Flow << BeginSeq << value.re << value.im << EndSeq;
-
-#endif
+	return detail::emit_complex(emitter, value.re, value.im);
 }
 
 } // namespace YAML

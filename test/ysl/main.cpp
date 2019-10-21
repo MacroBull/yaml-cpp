@@ -80,6 +80,7 @@ int main()
 			auto phase = idx * .1f + loop * .2f;
 			YSL(INFO) << "cos" << std::cos(phase) << "sin" << std::sin(phase);
 			YSL(INFO) << "log" << std::log(phase) << "exp" << std::exp(phase);
+			YSL(INFO) << "complex" << std::complex<int>{idx, loop};
 			YSL(INFO) << YAML::EndMap;
 
 			// C++14
