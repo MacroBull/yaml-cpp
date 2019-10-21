@@ -79,7 +79,7 @@ template <typename... Args>
 inline Emitter& operator<<(Emitter& emitter, const std::tuple<Args...>& value)
 {
 	emitter << Flow << BeginSeq;
-	detail::sequential_emitter<std::tuple<Args...>, sizeof...(Args)>::emit(emitter, value);
+	detail::sequential_printer<std::tuple<Args...>, sizeof...(Args)>::print(emitter, value);
 	return emitter << EndSeq;
 }
 

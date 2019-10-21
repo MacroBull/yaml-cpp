@@ -40,28 +40,30 @@ as_numeric(const T& value)
 }
 
 template <typename T, size_t N>
-struct sequential_emitter
+struct sequential_printer
 {
-	inline static void emit(Emitter& emitter, const T& value)
+	template <typename S>
+	inline static void print(S& stream, const T& value)
 	{
 		const auto i = N - 1;
 
-		sequential_emitter<T, i>::emit(emitter, value);
-		emitter << std::get<i>(value);
+		sequential_printer<T, i>::print(stream, value);
+		stream << std::get<i>(value);
 	}
 };
 
 template <typename T>
-struct sequential_emitter<T, 1>
+struct sequential_printer<T, 1>
 {
-	inline static void emit(Emitter& emitter, const T& value)
+	template <typename S>
+	inline static void print(S& stream, const T& value)
 	{
-		emitter << std::get<0>(value);
+		stream << std::get<0>(value);
 	}
 };
 
-template <typename T>
-inline Emitter& emit_sequence(Emitter& emitter, const T& value)
+template <typename E, typename T>
+inline E& emit_sequence(E& emitter, const T& value)
 {
 	emitter << BeginSeq;
 	for (const auto& item : value)
@@ -71,8 +73,8 @@ inline Emitter& emit_sequence(Emitter& emitter, const T& value)
 	return emitter << EndSeq;
 }
 
-template <typename T>
-inline Emitter& emit_mapping(Emitter& emitter, const T& value)
+template <typename E, typename T>
+inline E& emit_mapping(E& emitter, const T& value)
 {
 	emitter << BeginMap;
 	for (const auto& key_value : value)
@@ -149,9 +151,10 @@ struct Sequential
 {
 	/*const*/ std::tuple<Args...> values;
 
-	inline void emit(Emitter& emitter)
+	template <typename S>
+	inline void print(S& stream) const
 	{
-		detail::sequential_emitter<std::tuple<Args...>, sizeof...(Args)>::emit(emitter, values);
+		detail::sequential_printer<std::tuple<Args...>, sizeof...(Args)>::print(stream, values);
 	}
 };
 
@@ -166,7 +169,7 @@ inline Sequential<CArgs...> make_sequential(CArgs... args)
 template <typename... Args>
 Emitter& operator<<(Emitter& emitter, const Sequential<Args...>& value)
 {
-	value.emit(emitter);
+	value.print(emitter);
 	return emitter;
 }
 

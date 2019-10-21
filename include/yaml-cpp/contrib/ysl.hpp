@@ -6,10 +6,14 @@ Copyright (c) 2019 Macrobull
 
 #pragma once
 
+#include <iosfwd>
+#include <utility>
+
 #include <glog/logging.h>
 
 #include "yaml-cpp/emitter.h"
 
+#include "emitter_extra.hpp"
 #include "reconstructable.hpp"
 #include "stack_storage.hpp"
 
@@ -96,6 +100,7 @@ public:
 	~StreamLogger();
 
 	StreamLogger(const StreamLogger&) = delete;
+
 	StreamLogger& operator=(const StreamLogger&) = delete;
 
 	// forward YAML-type value
@@ -104,6 +109,14 @@ public:
 	{
 		m_implicit_eol = true;
 		thread_emitter() << value; // throw ?
+		return *this;
+	}
+
+	// overload sequential
+	template <typename... Args>
+	StreamLogger& operator<<(const Sequential<Args...>& value)
+	{
+		value.print(self());
 		return *this;
 	}
 
@@ -146,6 +159,63 @@ struct LoggerVoidify
 	inline void operator&(const StreamLogger& /*logger*/) {}
 };
 
+// RAII mapping scope
+template <typename... End>
+class Scope
+{
+public:
+	template <typename... Begin>
+	Scope(const char* file, int line, google::LogSeverity severity,
+		  const Sequential<Begin...>& begin, Sequential<End...> end, bool enabled = true)
+		: m_end{std::move(end)}
+		, m_file{file}
+		, m_line{line}
+		, m_severity{severity}
+		, m_enabled{enabled}
+	{
+		if (m_enabled)
+		{
+			m_logger.construct(file, line, severity);
+			*m_logger << begin;
+			m_logger.try_destruct();
+		}
+	}
+
+	Scope(Scope&& xvalue) noexcept
+		: m_end{std::move(xvalue.m_end)}
+		, m_enabled{xvalue.m_enabled}
+	{}
+
+	Scope& operator=(const Scope& /*rvalue*/) = default;
+
+	~Scope()
+	{
+		if (m_enabled)
+		{
+			m_logger.construct(m_file, m_line, m_severity);
+			*m_logger << m_end;
+			m_logger.try_destruct();
+		}
+	}
+
+private:
+	stack_storage<StreamLogger> m_logger;
+	const Sequential<End...>    m_end;
+	const char* const           m_file{};
+	const int                   m_line{};
+	const google::LogSeverity   m_severity{};
+	const bool                  m_enabled{};
+};
+
+template <typename... Begin, typename... End>
+Scope<End...>
+make_stream_logging_scope(const char* file, int line, google::LogSeverity severity,
+						  const Sequential<Begin...>& begin, const Sequential<End...>& end,
+						  bool enabled = true)
+{
+	return Scope<End...>{file, line, severity, begin, end, enabled};
+}
+
 } // namespace YSL_NAMESPACE
 
 //// YSL macros, see @ref "glog/logging.h"
@@ -160,6 +230,7 @@ namespace YSL_ = YSL; // prevent recursive macro expansion
 
 #define YSL(severity) YSL_NS_ StreamLogger{__FILE__, __LINE__, google::GLOG_##severity}.self()
 #define YSL_AT_LEVEL(severity) YSL_NS_ StreamLogger(__FILE__, __LINE__, severity).self()
+
 #define YSL_TO_STRING(severity, message)                                                       \
 	YSL_NS_ StreamLogger{                                                                      \
 			__FILE__, __LINE__, google::GLOG_##severity, static_cast<std::string*>(message)}   \
@@ -180,4 +251,42 @@ namespace YSL_ = YSL; // prevent recursive macro expansion
 #define YSL_IF(severity, condition)                                                            \
 	!(condition) ? (void)0 : YSL_NS_ LoggerVoidify() & YSL(severity)
 #define VYSL(verboselevel) YSL_IF(INFO, VLOG_IS_ON(verboselevel))
-#define VYSL_IF(verboselevel, condition) YSL_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
+#define VYSL_IF(verboselevel, condition) YSL_IF(INFO, ((condition) && VLOG_IS_ON(verboselevel)))
+
+#define YSL_SCOPE_(severity, ...)                                                              \
+	auto LOG_EVERY_N_VARNAME(scope_, __LINE__)                                                 \
+	{                                                                                          \
+		YSL_NS_ make_stream_logging_scope(__FILE__, __LINE__, google::GLOG_##severity,         \
+										  YSL_NS_ make_sequential(__VA_ARGS__),                \
+										  YSL_NS_ make_sequential(YSL_NS_ EndMap))             \
+	}
+#define YSL_SCOPE(severity) YSL_SCOPE_(severity, YSL_NS_ BeginMap)
+#define YSL_FSCOPE(severity, name)                                                             \
+	YSL_SCOPE_(severity, YSL_NS_ ThreadFrame(name), YSL_NS_ BeginMap)
+#define YSL_MSCOPE(severity, name)                                                             \
+	YSL_SCOPE_(severity, YSL_NS_ Key, name, YSL_NS_ Value, YSL_NS_ Block, YSL_NS_ BeginMap)
+#define YSL_CSCOPE(severity, name)                                                             \
+	YSL_SCOPE_(severity, YSL_NS_ Key, name, YSL_NS_ Value, YSL_NS_ Flow, YSL_NS_ BeginMap)
+
+#define VYSL_SCOPE_(verboselevel, ...)                                                         \
+	auto LOG_EVERY_N_VARNAME(scope_, __LINE__)                                                 \
+	{                                                                                          \
+		YSL_NS_ make_stream_logging_scope(                                                     \
+				__FILE__, __LINE__, google::GLOG_INFO, YSL_NS_ make_sequential(__VA_ARGS__),   \
+				YSL_NS_ make_sequential(YSL_NS_ EndMap), VLOG_IS_ON(verboselevel))             \
+	}
+#define VYSL_SCOPE(verboselevel) VYSL_SCOPE_(verboselevel, YSL_NS_ BeginMap)
+#define VYSL_FSCOPE(verboselevel, name)                                                        \
+	VYSL_SCOPE_(verboselevel, YSL_NS_ ThreadFrame(name), YSL_NS_ BeginMap)
+#define VYSL_MSCOPE(verboselevel, name)                                                        \
+	VYSL_SCOPE_(verboselevel, YSL_NS_ Key, name, YSL_NS_ Value, YSL_NS_ Block, YSL_NS_ BeginMap)
+#define VYSL_CSCOPE(verboselevel, name)                                                        \
+	VYSL_SCOPE_(verboselevel, YSL_NS_ Key, name, YSL_NS_ Value, YSL_NS_ Flow, YSL_NS_ BeginMap)
+
+#define YSL_INDEXED_(name, id) (std::string{name} + '[' + std::to_string(id) + ']')
+#define YSL_IFSCOPE(severity, name, id) YSL_FSCOPE(severity, YSL_INDEXED_(name, id))
+#define YSL_IMSCOPE(severity, name, id) YSL_MSCOPE(severity, YSL_INDEXED_(name, id))
+#define YSL_ICSCOPE(severity, name, id) YSL_CSCOPE(severity, YSL_INDEXED_(name, id))
+#define VYSL_IFSCOPE(severity, name, id) VYSL_FSCOPE(severity, YSL_INDEXED_(name, id))
+#define VYSL_IMSCOPE(severity, name, id) VYSL_MSCOPE(severity, YSL_INDEXED_(name, id))
+#define VYSL_ICSCOPE(severity, name, id) VYSL_CSCOPE(severity, YSL_INDEXED_(name, id))

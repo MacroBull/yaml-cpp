@@ -14,45 +14,49 @@ int main()
 	FLAGS_minloglevel = 0;
 	FLAGS_v           = 2;
 
-	// setup YSL for current thread
+	// setup YSL for current thread: use 4 sapces as indent
 	YAML::StreamLogger::set_thread_format(YAML::LoggerFormat::Indent, 4);
 
 	// plain glog LOG
-	LOG(INFO) << "Hello world!";
+	LOG(INFO) << "This is a plain glog record";
 
 	// simple key-value scope
+	// YSL(INFO) << key << value;
 	{
-		YSL(INFO) << YAML::ThreadFrame("Hello YSL") << YAML::BeginMap;
-		YSL(INFO) << "name"
-				  << "Mark McGwire";
+		YSL_FSCOPE(INFO, "A YSL Frame");
+		YSL(INFO) << "name"          // key
+				  << "Mark McGwire"; // value
 		YSL(INFO) << "hr" << 65;
 		YSL(INFO) << "avg" << 0.278f;
-		YSL(INFO) << YAML::EndMap;
 	}
 
 	// stl and flow emission, explicit end-of-document
 	{
-		YSL(INFO) << YAML::ThreadFrame("Hello Container");
+		// manually start a frame
+		YSL(INFO) << YAML::ThreadFrame("Some Containers");
+		// setup local precision
 		YSL(INFO) << YAML::FloatPrecision(3);
+		// start a mapping
 		YSL(INFO) << YAML::BeginMap;
 		YSL(INFO) << "hello" << std::map<int, float>{{1, 3.4f}, {2, 6.78f}, {3, 9.0f}};
 		YSL(INFO) << "PI";
 		YSL(INFO) << YAML::Flow << std::vector<int>{3, 1, 4, 1, 5, 9, 2, 6};
+		// end the mapping and the frame(explicitly)
 		YSL(INFO) << YAML::EndMap << YAML::EndDoc;
 	}
 
 	// comment, literal and implicit/explicit new line
 	{
-		YSL(INFO) << YAML::ThreadFrame("Hello Newline") << YAML::BeginMap;
+		YSL_FSCOPE(INFO, "About Comment, Literal And Newline");
 		YSL(INFO) << YAML::Comment("This is a comment");
-		YSL(INFO) << "glog newline" << -1;
+		YSL(INFO) << "glog newline" << nullptr;
 		LOG(INFO) << std::endl;
 		YSL(INFO) << "ysl newline" << true;
 		YSL(INFO) << YAML::Newline;
 		YSL(INFO) << "newline and literal" << YAML::Literal << "multi\nline\nliteral";
-		YSL(INFO) << YAML::EndMap << YAML::Newline;
 	}
 
+	// LOG_AT_LEVEL like
 	YSL_AT_LEVEL(2) << YAML::ThreadFrame("At level 2") << YAML::EndDoc;
 
 	// logging level and LOG_IF like
@@ -69,7 +73,8 @@ int main()
 	const int  n      = 4;
 	const int  m      = 1000;
 	const auto worker = [](int idx) {
-		YAML::StreamLogger::set_thread_format(YAML::DoubleQuoted); // better performance
+		// use quoted string style for better performance
+		YAML::StreamLogger::set_thread_format(YAML::DoubleQuoted);
 		YAML::StreamLogger::set_thread_format(YAML::LoggerFormat::FloatPrecision, 3);
 
 		// interval logging
@@ -77,6 +82,7 @@ int main()
 		{
 			YSL(INFO) << YAML::ThreadFrame("Thread " + std::to_string(idx)) << YAML::Flow
 					  << YAML::BeginMap;
+
 			auto phase = idx * .1f + loop * .2f;
 			YSL(INFO) << "cos" << std::cos(phase) << "sin" << std::sin(phase);
 			YSL(INFO) << "log" << std::log(phase) << "exp" << std::exp(phase);
@@ -89,7 +95,7 @@ int main()
 			std::this_thread::sleep_for(std::chrono::milliseconds{10});
 		}
 
-		YSL(INFO) << YAML::EndDoc;
+		YSL(INFO) << YAML::EndDoc; // explicit
 	};
 	std::vector<std::thread> threads;
 	threads.reserve(n);
@@ -102,5 +108,6 @@ int main()
 		thread.join();
 	}
 
+	LOG(INFO); // HINT: extra flush
 	return 0;
 }

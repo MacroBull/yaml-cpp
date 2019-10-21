@@ -59,13 +59,16 @@ public:
 		return m_payload;
 	}
 
-	inline void try_destruct()
+	inline bool try_destruct()
 	{
 		if (m_inited)
 		{
 			m_payload.~T(); // noexcept
 			m_inited = false;
+			return true;
 		}
+
+		return false;
 	}
 
 protected:

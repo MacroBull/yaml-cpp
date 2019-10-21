@@ -168,9 +168,9 @@ inline Emitter& thread_emitter()
 	return ret;
 }
 
-inline decltype(FLAGS_minloglevel)& min_log_level()
+inline const decltype(FLAGS_minloglevel)& min_log_level()
 {
-	static thread_local decltype(FLAGS_minloglevel) ret{};
+	static const decltype(FLAGS_minloglevel) ret{FLAGS_minloglevel};
 	return ret;
 }
 
@@ -187,8 +187,7 @@ namespace YSL_IMPL_NS
 
 inline void bypass_glog_flush()
 {
-	detail::min_log_level() = FLAGS_minloglevel;
-	FLAGS_minloglevel       = google::NUM_SEVERITIES;
+	FLAGS_minloglevel = google::NUM_SEVERITIES;
 }
 
 inline void restore_glog_state()

@@ -10,31 +10,13 @@ namespace YAML
 
 //// cv::String
 
-Emitter& operator<<(Emitter& emitter, const cv::String& value)
-{
-	return emitter << value.c_str();
-}
+Emitter& operator<<(Emitter& emitter, const cv::String& value);
 
 #ifndef YAML_EMITTER_NO_CV_FORMATTER
 
 //// cv::Mat
 
-Emitter& operator<<(Emitter& emitter, const cv::Mat& value)
-{
-	auto formatter = cv::Formatter::get(cv::Formatter::FMT_PYTHON);
-	formatter->setMultiline(true);
-
-#ifdef YSL_NAMESPACE // extension
-
-	formatter->set32fPrecision(static_cast<int>(emitter.GetFloatPrecision()));
-	formatter->set64fPrecision(static_cast<int>(emitter.GetDoublePrecision()));
-
-#endif
-
-	return detail::emit_streamable(
-			emitter << LocalTag("tensor") << Literal,
-			cv::Formatter::get(cv::Formatter::FMT_PYTHON)->format(value));
-}
+Emitter& operator<<(Emitter& emitter, const cv::Mat& value);
 
 #endif
 
@@ -151,10 +133,7 @@ Emitter& operator<<(Emitter& emitter, const cv::Rect_<T>& value)
 
 //// cv::Range
 
-Emitter& operator<<(Emitter& emitter, const cv::Range& value)
-{
-	return emitter << Flow << BeginSeq << value.start << value.end << EndSeq;
-}
+Emitter& operator<<(Emitter& emitter, const cv::Range& value);
 
 //// cv::Complex
 
@@ -162,6 +141,39 @@ template <typename T>
 inline Emitter& operator<<(Emitter& emitter, const cv::Complex<T>& value)
 {
 	return detail::emit_complex(emitter, value.re, value.im);
+}
+
+//// implementations
+
+Emitter& operator<<(Emitter& emitter, const cv::String& value)
+{
+	return emitter << value.c_str();
+}
+
+#ifndef YAML_EMITTER_NO_CV_FORMATTER
+
+Emitter& operator<<(Emitter& emitter, const cv::Mat& value)
+{
+	auto formatter = cv::Formatter::get(cv::Formatter::FMT_PYTHON);
+	formatter->setMultiline(true);
+
+#ifdef YSL_NAMESPACE // extension
+
+	formatter->set32fPrecision(static_cast<int>(emitter.GetFloatPrecision()));
+	formatter->set64fPrecision(static_cast<int>(emitter.GetDoublePrecision()));
+
+#endif
+
+	return detail::emit_streamable(
+			emitter << LocalTag("tensor") << Literal,
+			cv::Formatter::get(cv::Formatter::FMT_PYTHON)->format(value));
+}
+
+#endif
+
+Emitter& operator<<(Emitter& emitter, const cv::Range& value)
+{
+	return emitter << Flow << BeginSeq << value.start << value.end << EndSeq;
 }
 
 } // namespace YAML
