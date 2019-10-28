@@ -282,30 +282,30 @@ YSL_IMPL_STORAGE bool StreamLogger::set_thread_format(LoggerFormat value, std::s
 	auto& emitter = thread_emitter();
 	switch (value)
 	{
-	case LoggerFormat::Indent:
-	{
-		return emitter.SetIndent(n);
-	}
-	case LoggerFormat::PreCommentIndent:
-	{
-		return emitter.SetPreCommentIndent(n);
-	}
-	case LoggerFormat::PostCommentIndent:
-	{
-		return emitter.SetPostCommentIndent(n);
-	}
-	case LoggerFormat::FloatPrecision:
-	{
-		return emitter.SetFloatPrecision(n);
-	}
-	case LoggerFormat::DoublePrecision:
-	{
-		return emitter.SetDoublePrecision(n);
-	}
-	default:
-	{
-		return false;
-	}
+		case LoggerFormat::Indent:
+		{
+			return emitter.SetIndent(n);
+		}
+		case LoggerFormat::PreCommentIndent:
+		{
+			return emitter.SetPreCommentIndent(n);
+		}
+		case LoggerFormat::PostCommentIndent:
+		{
+			return emitter.SetPostCommentIndent(n);
+		}
+		case LoggerFormat::FloatPrecision:
+		{
+			return emitter.SetFloatPrecision(n);
+		}
+		case LoggerFormat::DoublePrecision:
+		{
+			return emitter.SetDoublePrecision(n);
+		}
+		default:
+		{
+			return false;
+		}
 	}
 }
 
