@@ -110,7 +110,7 @@ operator<<(Emitter& emitter, const T& value)
 //// HINT: general (non-STL) streamable (AS TAGGED LITERAL)
 
 template <typename T>
-inline detail::enable_if_t<!std::is_pointer<T>::value &&
+inline detail::enable_if_t<!std::is_enum<T>::value && !std::is_pointer<T>::value &&
 								   !detail::stl_is_std_iterable<T>::value &&
 								   !detail::stl_has_type_element_type<T>::value,
 						   Emitter&>

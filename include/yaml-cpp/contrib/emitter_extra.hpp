@@ -168,6 +168,15 @@ inline Emitter& emit_complex(Emitter& emitter, const T& real, const T& imag)
 
 } // namespace detail
 
+//// extra enums
+
+template <typename T>
+inline detail::enable_if_t<std::is_enum<T>::value, Emitter&> operator<<(Emitter& emitter, T v)
+{
+	emitter << LocalTag(typeid(T).name());
+	return emitter.WriteIntegralType(v);
+}
+
 //// extra pointers
 
 inline Emitter& operator<<(Emitter& emitter, std::nullptr_t)
