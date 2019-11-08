@@ -65,6 +65,16 @@ void EmitterState::SetLongKey() {
   m_groups.back()->longKey = true;
 }
 
+void EmitterState::SetLeftBraceEmitted() {
+  assert(!m_groups.empty());
+  if (m_groups.empty()) {
+    return;
+  }
+
+  assert(m_groups.back()->type != GroupType::NoType);
+  m_groups.back()->leftBraceEmitted = true;
+}
+
 void EmitterState::ForceFlow() {
   assert(!m_groups.empty());
   if (m_groups.empty()) {
@@ -210,16 +220,20 @@ bool EmitterState::CurGroupLongKey() const {
   return m_groups.empty() ? false : m_groups.back()->longKey;
 }
 
+bool EmitterState::CurGroupLeftBraceEmitted() const {
+  return m_groups.empty() ? false : m_groups.back()->leftBraceEmitted;
+}
+
 std::size_t EmitterState::LastIndent() const {
   if (HasBegunNode()) {
     return m_curIndent + (m_groups.empty() ? m_indent.get() : m_groups.back()->indent);
-  } else {
-    if (m_groups.size() <= 1) {
-      return 0;
-    }
-
-    return m_curIndent - m_groups[m_groups.size() - 2]->indent;
   }
+
+  if (m_groups.size() <= 1) {
+    return 0;
+  }
+
+  return m_curIndent - m_groups[m_groups.size() - 2]->indent;
 }
 
 void EmitterState::ClearModifiedSettings() { m_modifiedSettings.clear(); }

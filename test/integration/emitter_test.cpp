@@ -694,15 +694,6 @@ TEST_F(EmitterTest, UserTypeInContainer) {
   ExpectEmit("- x: 5\n  bar: hello\n- x: 3\n  bar: goodbye");
 }
 
-template <typename T>
-Emitter& operator<<(Emitter& out, const T* v) {
-  if (v)
-    out << *v;
-  else
-    out << Null;
-  return out;
-}
-
 TEST_F(EmitterTest, PointerToInt) {
   int foo = 5;
   int* bar = &foo;

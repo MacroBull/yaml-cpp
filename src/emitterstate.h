@@ -46,6 +46,7 @@ class EmitterState {
   void SetTag();
   void SetNonContent();
   void SetLongKey();
+  void SetLeftBraceEmitted();
   void ForceFlow();
   void StartedDoc();
   void EndedDoc();
@@ -61,6 +62,7 @@ class EmitterState {
   std::size_t CurGroupIndent() const;
   std::size_t CurGroupChildCount() const;
   bool CurGroupLongKey() const;
+  bool CurGroupLeftBraceEmitted() const;
 
   std::size_t LastIndent() const;
   std::size_t CurIndent() const { return m_curIndent; }
@@ -150,6 +152,7 @@ class EmitterState {
           indent(0),
           childCount(0),
           longKey(false),
+          leftBraceEmitted(false),
           modifiedSettings{} {}
 
     GroupType::value type;
@@ -157,6 +160,7 @@ class EmitterState {
     std::size_t indent;
     std::size_t childCount;
     bool longKey;
+    bool leftBraceEmitted;
 
     SettingChanges modifiedSettings;
 
