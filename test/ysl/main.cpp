@@ -83,7 +83,7 @@ int main()
 			YSL(INFO) << YAML::ThreadFrame("Thread " + std::to_string(idx)) << YAML::Flow
 					  << YAML::BeginMap;
 
-			auto phase = idx * .1f + loop * .2f;
+			auto phase = static_cast<float>(idx) * .1f + static_cast<float>(loop) * .2f;
 			YSL(INFO) << "cos" << std::cos(phase) << "sin" << std::sin(phase);
 			YSL(INFO) << "log" << std::log(phase) << "exp" << std::exp(phase);
 			YSL(INFO) << "complex" << std::complex<int>{idx, loop};
