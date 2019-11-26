@@ -117,7 +117,8 @@ inline detail::enable_if_t<!(std::is_enum<T>::value || std::is_pointer<T>::value
 						   Emitter&>
 operator<<(Emitter& emitter, const T& value)
 {
-	return detail::emit_streamable(emitter << LocalTag(typeid(T).name()) << Literal, value);
+	return detail::emit_streamable(
+			emitter << LocalTag(detail::typeid_name<T>()) << Literal, value);
 }
 
 } // namespace YAML
