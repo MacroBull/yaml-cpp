@@ -159,3 +159,9 @@ if (YAML_CPP_CLANG_FORMAT_EXE)
     COMMENT "Running clang-format"
     VERBATIM)
 endif()
+
+if (YAML_BUILD_SHARED_LIBS)
+  target_link_libraries(yaml-cpp
+    PRIVATE
+    glog)
+endif()
