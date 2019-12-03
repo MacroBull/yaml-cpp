@@ -57,7 +57,8 @@ int main()
 	}
 
 	// LOG_AT_LEVEL like
-	YSL_AT_LEVEL(2) << YAML::ThreadFrame("At level 2") << YAML::EndDoc;
+	YSL_AT_LEVEL(2) << YAML::ThreadFrame("A Veryveryveryveryveryvery Long Frame At level 2")
+					<< YAML::EndDoc;
 
 	// logging level and LOG_IF like
 	for (int loop = 0; loop < 10; ++loop)
