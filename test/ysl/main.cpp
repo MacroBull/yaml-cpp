@@ -7,12 +7,16 @@
 #include <yaml-cpp/contrib/ysl.hpp>
 #include <yaml-cpp/stlemitter.h>
 
-int main()
+int main(int /*argc*/, char* argv[])
 {
 	// setup glog
-	FLAGS_logtostderr = true;
-	FLAGS_minloglevel = 0;
-	FLAGS_v           = 2;
+	FLAGS_logtostderr      = true;
+	FLAGS_colorlogtostderr = true;
+	FLAGS_minloglevel      = 0;
+	FLAGS_v                = 2;
+	// FLAGS_log_prefix       = false;
+
+	google::InitGoogleLogging(argv[0]);
 
 	// setup YSL for current thread: use 4 sapces as indent
 	YAML::StreamLogger::set_thread_format(YAML::LoggerFormat::Indent, 4);
@@ -23,7 +27,7 @@ int main()
 	// simple key-value scope
 	// YSL(INFO) << key << value;
 	{
-		YSL_FSCOPE(INFO, "A YSL Frame");
+		YSL_FSCOPE(INFO, "A Simple YSL Frame");
 		YSL(INFO) << "name"          // key
 				  << "Mark McGwire"; // value
 		YSL(INFO) << "hr" << 65;
@@ -33,7 +37,7 @@ int main()
 	// stl and flow emission, explicit end-of-document
 	{
 		// manually start a frame
-		YSL(INFO) << YAML::ThreadFrame("Some Containers");
+		YSL(INFO) << YAML::ThreadFrame("Some STL Containers");
 		// setup local precision
 		YSL(INFO) << YAML::FloatPrecision(3);
 		// start a mapping
@@ -41,6 +45,7 @@ int main()
 		YSL(INFO) << "hello" << std::map<int, float>{{1, 3.4f}, {2, 6.78f}, {3, 9.0f}};
 		YSL(INFO) << "PI";
 		YSL(INFO) << YAML::Flow << std::vector<int>{3, 1, 4, 1, 5, 9, 2, 6};
+		YSL(INFO) << "empty tuple" << std::tuple<>();
 		// end the mapping and the frame(explicitly)
 		YSL(INFO) << YAML::EndMap << YAML::EndDoc;
 	}
@@ -49,6 +54,7 @@ int main()
 	{
 		YSL_FSCOPE(INFO, "About Comment, Literal And Newline");
 		YSL(INFO) << YAML::Comment("This is a comment");
+		LOGC(INFO) << "This is a comment by LOGC";
 		YSL(INFO) << "glog newline" << nullptr;
 		LOG(INFO) << std::endl;
 		YSL(INFO) << "ysl newline" << true;
@@ -57,8 +63,9 @@ int main()
 	}
 
 	// LOG_AT_LEVEL like
-	YSL_AT_LEVEL(2) << YAML::ThreadFrame("A Veryveryveryveryveryvery Long Frame At level 2")
-					<< YAML::EndDoc;
+	YSL_AT_LEVEL(2)
+			<< YAML::ThreadFrame("A Veryveryveryveryveryveryveryvery Long Frame At level 2")
+			<< YAML::EndDoc;
 
 	// logging level and LOG_IF like
 	for (int loop = 0; loop < 10; ++loop)
@@ -83,6 +90,7 @@ int main()
 		{
 			YSL(INFO) << YAML::ThreadFrame("Thread " + std::to_string(idx)) << YAML::Flow
 					  << YAML::BeginMap;
+			VYSL_LIC_IF(2, "mod10 counter", loop % 10 == 0);
 
 			auto phase = static_cast<float>(idx) * .1f + static_cast<float>(loop) * .2f;
 			YSL(INFO) << "cos" << std::cos(phase) << "sin" << std::sin(phase);
