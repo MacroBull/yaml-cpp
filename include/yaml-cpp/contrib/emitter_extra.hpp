@@ -55,12 +55,12 @@ struct is_complete
 	static const bool value = sizeof(is_complete_helper<T>(nullptr)) != 1;
 };
 
-template <class T, typename Test = void>
-struct is_emittable : std::false_type
+template <class S, class T, typename Test = void>
+struct is_streamable : std::false_type
 {};
 
-template <class T>
-struct is_emittable<T, void_t<decltype(std::declval<Emitter&>() << std::declval<T>())>>
+template <class S, class T>
+struct is_streamable<S, T, void_t<decltype(std::declval<S&>() << std::declval<T>())>>
 	: std::true_type
 {};
 
@@ -178,7 +178,7 @@ inline std::string typeid_name()
 
 	int status = 0;
 
-	const auto realname{abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &status)};
+	const auto realname = abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &status);
 	const std::string name{realname};
 	free(realname);
 

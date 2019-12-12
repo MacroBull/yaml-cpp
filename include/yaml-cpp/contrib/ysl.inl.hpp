@@ -352,11 +352,11 @@ YSL_IMPL_STORAGE StreamLogger& StreamLogger::operator<<(const ThreadFrame& value
 	}
 
 	auto&      stream = thread_stream();
-	const auto text{std::string{" "}
-							.append(value.name)
-							.append(": ")
-							.append(std::to_string(detail::thread_frame_index()++))
-							.append(" ")};
+	const auto text   = std::string{" "}
+							  .append(value.name)
+							  .append(": ")
+							  .append(std::to_string(detail::thread_frame_index()++))
+							  .append(" ");
 
 	stream << "--- # ";
 	stream << std::setfill('-')
@@ -365,7 +365,8 @@ YSL_IMPL_STORAGE StreamLogger& StreamLogger::operator<<(const ThreadFrame& value
 	stream << text;
 	stream << std::setfill('-')
 		   << std::setw(std::max(1, static_cast<int>(value.fill_width - text.size() / 2)));
-	stream << "" << " # ";
+	stream << ""
+		   << " # ";
 
 	self() << BeginDoc;
 	return *this;
