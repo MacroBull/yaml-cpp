@@ -32,11 +32,25 @@ Emitter& operator<<(Emitter& emitter, const cv::MatExpr& value);
 //// cv::Mat_
 
 template <typename T>
-Emitter& operator<<(Emitter& emitter, const cv::Mat_<T>& value)
+inline Emitter& operator<<(Emitter& emitter, const cv::Mat_<T>& value)
 {
 	emitter << LocalTag("tensor");
 
-#ifndef YAML_DEF_EMIT_WITHOUT_CV_FORMATTER
+#ifdef YAML_DEF_EMIT_WITHOUT_CV_FORMATTER // direct
+
+	emitter << BeginSeq;
+	for (int i = 0; i < value.rows; ++i)
+	{
+		emitter << Flow << BeginSeq;
+		for (int j = 0; j < value.cols; ++j)
+		{
+			emitter << detail::as_numeric(value(i, j));
+		}
+		emitter << EndSeq;
+	}
+	return emitter << EndSeq;
+
+#else // use cv::Formatter
 
 	auto formatter = cv::Formatter::get(cv::Formatter::FMT_PYTHON);
 	formatter->setMultiline(true);
@@ -51,27 +65,13 @@ Emitter& operator<<(Emitter& emitter, const cv::Mat_<T>& value)
 	return detail::emit_streamable(
 			emitter << Literal, cv::Formatter::get(cv::Formatter::FMT_PYTHON)->format(value));
 
-#else
-
-	emitter << BeginSeq;
-	for (int i = 0; i < value.rows; ++i)
-	{
-		emitter << Flow << BeginSeq;
-		for (int j = 0; j < value.cols; ++j)
-		{
-			emitter << detail::as_numeric(value(i, j));
-		}
-		emitter << EndSeq;
-	}
-	return emitter << EndSeq;
-
 #endif
 }
 
 //// cv::Matx
 
 template <typename T, int M, int N>
-Emitter& operator<<(Emitter& emitter, const cv::Matx<T, M, N>& value)
+inline Emitter& operator<<(Emitter& emitter, const cv::Matx<T, M, N>& value)
 {
 	if (value.rows > 1 && value.cols > 1) // simplify vector representation
 	{
@@ -119,7 +119,7 @@ inline Emitter& operator<<(Emitter& emitter, const cv::Point3_<T>& value)
 //// cv::Vec
 
 template <typename T, int N>
-Emitter& operator<<(Emitter& emitter, const cv::Vec<T, N>& value)
+inline Emitter& operator<<(Emitter& emitter, const cv::Vec<T, N>& value)
 {
 	emitter << Flow << BeginSeq;
 	for (int i = 0; i < value.channels; ++i)
@@ -132,7 +132,7 @@ Emitter& operator<<(Emitter& emitter, const cv::Vec<T, N>& value)
 //// cv::Vec
 
 template <typename T>
-Emitter& operator<<(Emitter& emitter, const cv::Scalar_<T>& value)
+inline Emitter& operator<<(Emitter& emitter, const cv::Scalar_<T>& value)
 {
 	emitter << Flow << BeginSeq;
 	for (int i = 0; i < value.channels; ++i)

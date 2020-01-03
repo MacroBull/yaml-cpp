@@ -19,11 +19,11 @@ using enable_if_t = typename std::enable_if<P, T>::type;
 
 //// reconstruct function
 
-template <typename T, typename... CArgs>
-inline T& reconstruct(T& target, CArgs... args)
+template <typename T, typename... Args>
+inline T& reconstruct(T& target, Args&&... args)
 {
 	target.~T();
-	new (std::addressof(target)) T(std::move(args)...);
+	new (std::addressof(target)) T(std::forward<Args>(args)...);
 	return target;
 }
 
@@ -58,9 +58,9 @@ struct ReconstructorImpl : ReconstructorBase<T>
 {
 	/*const*/ std::tuple<Params...> params; // modifiable
 
-	template <typename... CArgs>
-	explicit ReconstructorImpl(CArgs... args) noexcept
-		: params{std::forward<CArgs>(args)...}
+	template <typename... Args>
+	explicit ReconstructorImpl(Args&&... args) noexcept
+		: params{std::forward<Args>(args)...}
 	{}
 
 	explicit ReconstructorImpl(std::tuple<Params...> rv_params) noexcept
@@ -100,12 +100,12 @@ template <typename T>
 class ReconstructableImpl : public T
 {
 public:
-	template <typename... CArgs>
-	explicit ReconstructableImpl(bool reset, CArgs... args)
-		: T(std::forward<CArgs>(args)...)
+	template <typename... Args>
+	explicit ReconstructableImpl(bool reset, Args&&... args)
+		: T(std::forward<Args>(args)...)
 		, m_reconstructor(reset ? nullptr
-								: new ReconstructorImpl<ReconstructableImpl, bool, CArgs...>(
-										  true, std::forward<CArgs>(args)...))
+								: new ReconstructorImpl<ReconstructableImpl, bool, Args...>(
+										  true, std::forward<Args>(args)...))
 	{}
 
 	/*virtual*/ ~ReconstructableImpl() noexcept // reduce vtable with final
@@ -129,9 +129,9 @@ private:
 template <typename T>
 struct Reconstructable final : ReconstructableImpl<T> // final inheritance
 {
-	template <typename... CArgs>
-	explicit Reconstructable(CArgs... args)
-		: ReconstructableImpl<T>(false, std::forward<CArgs>(args)...)
+	template <typename... Args>
+	explicit Reconstructable(Args&&... args)
+		: ReconstructableImpl<T>(false, std::forward<Args>(args)...)
 	{}
 
 	template <typename U>

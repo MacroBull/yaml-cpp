@@ -20,10 +20,10 @@ public:
 	// StackStorage() {}
 	StackStorage() = default;
 
-	template <typename... CArgs>
-	explicit StackStorage(CArgs... args)
+	template <typename... Args>
+	explicit StackStorage(Args&&... args)
 	{
-		construct(std::forward<CArgs>(args)...);
+		construct(std::forward<Args>(args)...);
 	}
 
 	template <typename U>
@@ -58,11 +58,11 @@ public:
 		return m_pointer != nullptr;
 	}
 
-	template <typename... CArgs>
-	inline T& construct(CArgs... args)
+	template <typename... Args>
+	inline T& construct(Args&&... args)
 	{
 		try_destruct();
-		new (m_storage) T(std::move(args)...);
+		new (m_storage) T(std::forward<Args>(args)...);
 		m_pointer = reinterpret_cast<T*>(m_storage);
 		return *m_pointer;
 	}

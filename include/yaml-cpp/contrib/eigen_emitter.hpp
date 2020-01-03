@@ -22,9 +22,10 @@ struct generic_emitter<T, 4,
 					   enable_if_t<std::is_base_of<
 							   Eigen::DenseCoeffsBase<T, Eigen::ReadOnlyAccessors>, T>::value>>
 {
-	inline static Emitter& emit(Emitter& emitter, const T& value)
+	template <typename U>
+	inline static Emitter& emit(Emitter& emitter, U&& value)
 	{
-#ifdef YAML_DEF_EMIT_WITH_EIGEN_FORMATTER
+#ifdef YAML_DEF_EMIT_WITH_EIGEN_FORMATTER // use Eigen::IOFormat
 
 		Eigen::IOFormat   format(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
 		std::stringstream ss;
@@ -38,7 +39,7 @@ struct generic_emitter<T, 4,
 		return detail::emit_streamable(
 				emitter << LocalTag("tensor") << Literal, value.format(format), &ss);
 
-#else
+#else // direct
 
 		const auto matrix = value.eval();
 

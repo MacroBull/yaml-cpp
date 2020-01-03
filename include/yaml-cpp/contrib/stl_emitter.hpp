@@ -43,7 +43,8 @@ TRAITS_DECL_CLASS_HAS_TYPE(mapped_type)
 template <typename T>
 struct generic_emitter<T, 2, enable_if_t<detail::stl_is_std_iterable<T>::value>>
 {
-	inline static Emitter& emit(Emitter& emitter, const T& value)
+	template <typename U>
+	inline static Emitter& emit(Emitter& emitter, U&& value)
 	{
 		return detail::emit_sequence(emitter, value);
 	}
@@ -56,7 +57,8 @@ struct generic_emitter<T, 3,
 					   enable_if_t<detail::stl_is_std_iterable<T>::value &&
 								   detail::stl_has_type_mapped_type<T>::value>>
 {
-	inline static Emitter& emit(Emitter& emitter, const T& value)
+	template <typename U>
+	inline static Emitter& emit(Emitter& emitter, U&& value)
 	{
 		return detail::emit_mapping(emitter, value);
 	}
@@ -67,7 +69,8 @@ struct generic_emitter<T, 3,
 template <typename T>
 struct generic_emitter<T, 2, enable_if_t<detail::stl_has_type_element_type<T>::value>>
 {
-	inline static Emitter& emit(Emitter& emitter, const T& value)
+	template <typename U>
+	inline static Emitter& emit(Emitter& emitter, U&& value)
 	{
 		return emitter << value.get();
 	}

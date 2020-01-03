@@ -43,7 +43,7 @@ inline Emitter& operator<<(Emitter& emitter, const google::protobuf::Message& va
 	}
 	}
 
-#else
+#else // pb2 message only
 
 	return emitter << LocalTag("pb2_message") << Literal << text;
 

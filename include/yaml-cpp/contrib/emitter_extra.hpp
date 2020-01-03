@@ -95,8 +95,8 @@ inline int as_numeric(unsigned char value)
 template <typename T, size_t N>
 struct sequential_printer
 {
-	template <typename S>
-	inline static void print(S& stream, const T& value)
+	template <typename S, typename U>
+	inline static void print(S& stream, U&& value)
 	{
 		constexpr auto i = N - 1;
 
@@ -108,8 +108,8 @@ struct sequential_printer
 template <typename T>
 struct sequential_printer<T, 0>
 {
-	template <typename S>
-	inline static void print(S& /*stream*/, const T& /*value*/)
+	template <typename S, typename U>
+	inline static void print(S& /*stream*/, U&& /*value*/)
 	{}
 };
 
@@ -162,7 +162,11 @@ emit_streamable(Emitter& emitter, T&& value, std::stringstream* stream = nullptr
 template <typename T>
 inline Emitter& emit_complex(Emitter& emitter, T&& real, T&& imag)
 {
-#ifndef YAML_DEF_EMIT_NO_COMPLEX
+#ifdef YAML_DEF_EMIT_NO_COMPLEX // as sequence
+
+	return emitter << Flow << BeginSeq << as_numeric(real) << as_numeric(imag) << EndSeq;
+
+#else // as x+yj
 
 	std::stringstream ss;
 
@@ -175,10 +179,6 @@ inline Emitter& emit_complex(Emitter& emitter, T&& real, T&& imag)
 	ss << as_numeric(std::forward<T>(real)) << '+' << as_numeric(std::forward<T>(imag)) << 'j';
 	return emitter << LocalTag("complex") << ss.str();
 
-#else
-
-	return emitter << Flow << BeginSeq << as_numeric(real) << as_numeric(imag) << EndSeq;
-
 #endif
 }
 
@@ -186,7 +186,7 @@ template <typename T>
 inline std::string typeid_name()
 {
 
-#if defined(YAML_DEF_EMIT_ENABLE_GENERAL_DEMANGLED_TAG) && defined(__GNUG__)
+#if defined(YAML_DEF_EMIT_ENABLE_GENERAL_DEMANGLED_TAG) && defined(__GNUG__) // use demangled
 
 	int status(0);
 
@@ -196,7 +196,7 @@ inline std::string typeid_name()
 	const std::string name(realname);
 	free(realname);
 
-#else
+#else // keep demangled
 
 	const std::string name(typeid(T).name());
 
@@ -220,7 +220,8 @@ struct generic_emitter<T, 0>
 template <typename T>
 struct generic_emitter<T, 1, enable_if_t<is_streamable<std::ostream, T>::value>>
 {
-	inline static Emitter& emit(Emitter& emitter, const T& value)
+	template <typename U>
+	inline static Emitter& emit(Emitter& emitter, U&& value)
 	{
 		return detail::emit_streamable(emitter << LocalTag(detail::typeid_name<T>()) << Literal,
 									   value); //
@@ -261,7 +262,8 @@ struct generic_emitter<T, 2, enable_if_t<std::is_pointer<T>::value>>
 //// generic complete pointers
 
 template <typename T>
-struct generic_emitter<T, 3,
+struct generic_emitter<T,
+					   3,
 					   enable_if_t<std::is_pointer<T>::value &&
 								   detail::is_complete<remove_pointer_t<T>>::value>>
 {

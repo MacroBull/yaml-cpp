@@ -38,7 +38,7 @@ namespace YSL_NS
 // inherit YAML namespace
 using namespace YAML;
 
-// inherit and extent std::to_string
+// inherit and extend std::to_string
 using std::to_string;
 
 inline std::string to_string(const std::string& value)
@@ -61,13 +61,14 @@ enum class LoggerFormat
 struct ThreadFrame
 {
 	const std::string name;
-	const std::size_t fill_width{30};
-	const bool        reset{false};
+	const std::size_t fill_width{};
+	const bool        reset{};
 
 	static std::size_t index();
 
-	explicit ThreadFrame(std::string rv_name) noexcept;
-	ThreadFrame(std::string rv_name, std::size_t rv_fill_width, bool rv_reset) noexcept;
+	// c++11 does not support partial brace initialization, use default value instead
+	explicit ThreadFrame(std::string rv_name, std::size_t rv_fill_width = 30,
+						 bool rv_reset = false) noexcept;
 };
 
 // the YSL logger class
@@ -76,9 +77,9 @@ class StreamLogger
 	class SkipEmptyLogMessage : public google::LogMessage
 	{
 	public:
-		template <typename... CArgs>
-		explicit SkipEmptyLogMessage(CArgs... args)
-			: google::LogMessage(std::forward<CArgs>(args)...)
+		template <typename... Args>
+		explicit SkipEmptyLogMessage(Args&&... args)
+			: google::LogMessage(std::forward<Args>(args)...)
 		{
 			reset();
 		}
@@ -318,7 +319,7 @@ namespace YSL = YSL_NS; // define YSL
 	YSL_SCOPE_DECL_VAR(severity, YSL_::BeginMap);                                              \
 	YSL(severity)
 #define YSL_FSCOPE(severity, name)                                                             \
-	YSL_SCOPE_DECL_VAR(severity, YSL_::ThreadFrame(name), YSL_::BeginMap)
+	YSL_SCOPE_DECL_VAR(severity, YSL_::ThreadFrame{name}, YSL_::BeginMap)
 #define YSL_MSCOPE(severity, name)                                                             \
 	YSL_SCOPE_DECL_VAR(severity, YSL_::Key, name, YSL_::Value, YSL_::Block, YSL_::BeginMap)
 #define YSL_CSCOPE(severity, name)                                                             \
@@ -336,7 +337,7 @@ namespace YSL = YSL_NS; // define YSL
 	VYSL_SCOPE_DECL_VAR(verboselevel, YSL_::BeginMap);                                         \
 	VYSL(verboselevel)
 #define VYSL_FSCOPE(verboselevel, name)                                                        \
-	VYSL_SCOPE_DECL_VAR(verboselevel, YSL_::ThreadFrame(name), YSL_::BeginMap)
+	VYSL_SCOPE_DECL_VAR(verboselevel, YSL_::ThreadFrame{name}, YSL_::BeginMap)
 #define VYSL_MSCOPE(verboselevel, name)                                                        \
 	VYSL_SCOPE_DECL_VAR(verboselevel, YSL_::Key, name, YSL_::Value, YSL_::Block, YSL_::BeginMap)
 #define VYSL_CSCOPE(verboselevel, name)                                                        \
@@ -382,3 +383,9 @@ namespace YSL = YSL_NS; // define YSL
 #define DYSL_IF DYSL_(YSL_IF)
 #define DVYSL DYSL_(VYSL)
 #define DVYSL_IF DYSL_(VYSL_IF)
+
+#ifndef YSL_ERROR_LOGC
+
+#define YSL_ERROR_LOGC() LOGC(ERROR)
+
+#endif

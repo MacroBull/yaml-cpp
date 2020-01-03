@@ -10,6 +10,7 @@ Copyright (c) 2019 Macrobull
 
 #include "ysl.hpp"
 
+// these macros ensure consistency of implementations for ODR
 #ifdef YSL_PRIVATE_IMPL
 
 #define YSL_IMPL_NS
@@ -178,11 +179,11 @@ inline Reconstructable<Emitter>& thread_emitter()
 			(std::reference_wrapper<FilterForwardOutStream>(thread_stream()))); // HINT: use UI
 	if (!ret.good())
 	{
-		LOGC(ERROR);
-		LOGC(ERROR) << "YAML emitter is in bad state: " << ret.GetLastError();
-		LOGC(ERROR) << "  it is going to be reseted with new document";
-		LOGC(ERROR) << "  some of the log may be discarded ";
-		LOGC(ERROR);
+		YSL_ERROR_LOGC();
+		YSL_ERROR_LOGC() << "The YAML emitter is in bad state: " << ret.GetLastError();
+		YSL_ERROR_LOGC() << "  it is going to be reseted with a new document";
+		YSL_ERROR_LOGC() << "  some of the log records may be discarded ";
+		YSL_ERROR_LOGC();
 		ret.reconstruct();
 	}
 	return ret;
@@ -201,7 +202,7 @@ inline log_level_t min_log_level()
 	static const log_level_t ret([]() {
 		auto& mutex = minloglevel_mutex();
 		mutex.lock();
-		auto minloglevel = FLAGS_minloglevel;
+		const auto minloglevel = FLAGS_minloglevel;
 		mutex.unlock();
 		return minloglevel;
 	}());
@@ -238,10 +239,6 @@ YSL_IMPL_STORAGE std::size_t ThreadFrame::index()
 	return detail::thread_frame_index();
 }
 
-YSL_IMPL_STORAGE ThreadFrame::ThreadFrame(std::string rv_name) noexcept
-	: name(std::move(rv_name))
-{}
-
 YSL_IMPL_STORAGE
 ThreadFrame::ThreadFrame(std::string rv_name, std::size_t rv_fill_width, bool rv_reset) noexcept
 	: name(std::move(rv_name))
@@ -259,15 +256,16 @@ YSL_IMPL_STORAGE StreamLogger::SkipEmptyLogMessage::~SkipEmptyLogMessage()
 
 YSL_IMPL_STORAGE bool StreamLogger::SkipEmptyLogMessage::empty_line() // const
 {
-	auto buf = static_cast<google::base_logging::LogStreamBuf*>(stream().rdbuf());
-	if (buf->pcount() == m_init_count)
+	const auto buf    = static_cast<google::base_logging::LogStreamBuf*>(stream().rdbuf());
+	const auto pcount = buf->pcount();
+	if (pcount == m_init_count)
 	{
 		return true;
 	}
 
-	auto impl_buf = static_cast<YSL_IMPL_NS_ FilterForwardOutStreamBuf*>(
+	const auto impl_buf = static_cast<YSL_IMPL_NS_ FilterForwardOutStreamBuf*>(
 			detail::thread_stream().rdbuf());
-	if (buf->pcount() == m_init_count + 1 && impl_buf->end_with_eol())
+	if (pcount == m_init_count + 1 && impl_buf->end_with_eol())
 	{
 		return true;
 	}
@@ -277,9 +275,9 @@ YSL_IMPL_STORAGE bool StreamLogger::SkipEmptyLogMessage::empty_line() // const
 
 YSL_IMPL_STORAGE void StreamLogger::SkipEmptyLogMessage::reset()
 {
-	auto buf     = static_cast<google::base_logging::LogStreamBuf*>(stream().rdbuf());
-	m_init_count = buf->pcount();
-	detail::min_log_level(); // ensure min_log_level initialized
+	const auto buf = static_cast<google::base_logging::LogStreamBuf*>(stream().rdbuf());
+	m_init_count   = buf->pcount();
+	detail::min_log_level(); // ensure min_log_level initialized before bypass_glog_flush()
 }
 
 YSL_IMPL_STORAGE bool StreamLogger::set_thread_format(EMITTER_MANIP value)

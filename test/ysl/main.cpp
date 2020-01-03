@@ -37,7 +37,7 @@ int main(int /*argc*/, char* argv[])
 	// stl and flow emission, explicit end-of-document
 	{
 		// manually start a frame
-		YSL(INFO) << YAML::ThreadFrame("Some STL Containers");
+		YSL(INFO) << YAML::ThreadFrame{"Some STL Containers"};
 		// setup local precision
 		YSL(INFO) << YAML::FloatPrecision(3);
 		// start a mapping
@@ -64,13 +64,13 @@ int main(int /*argc*/, char* argv[])
 
 	// LOG_AT_LEVEL like
 	YSL_AT_LEVEL(2)
-			<< YAML::ThreadFrame("A Veryveryveryveryveryveryveryvery Long Frame At level 2")
+			<< YAML::ThreadFrame{"A Veryveryveryveryveryveryveryvery Long Frame At level 2"}
 			<< YAML::EndDoc;
 
 	// logging level and LOG_IF like
 	for (int loop = 0; loop < 10; ++loop)
 	{
-		YSL_IF(ERROR, loop & 1) << YAML::ThreadFrame("Loop " + std::to_string(loop));
+		YSL_IF(ERROR, loop & 1) << YAML::ThreadFrame{"Loop " + std::to_string(loop)};
 		YSL_IF(ERROR, loop & 1) << YAML::BeginSeq;
 		YSL_IF(WARNING, loop & 1) << YAML::Flow << std::vector<int>(loop, loop);
 		YSL_IF(ERROR, loop & 1) << YAML::EndSeq;
@@ -88,7 +88,7 @@ int main(int /*argc*/, char* argv[])
 		// interval logging
 		for (int loop = 0; loop < m; ++loop)
 		{
-			YSL(INFO) << YAML::ThreadFrame("Thread " + std::to_string(idx)) << YAML::Flow
+			YSL(INFO) << YAML::ThreadFrame{"Thread " + std::to_string(idx)} << YAML::Flow
 					  << YAML::BeginMap;
 			VYSL_LIC_IF(2, "mod10 counter", loop % 10 == 0);
 
